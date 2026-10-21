@@ -1,0 +1,886 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sublime Comporta Guest App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600;700&display=swap"><style>
+/* ============================================================
+   TOKENS — page stage (theme-aware)
+   ============================================================ */
+:root{
+  --stage:#EAE2D8;
+  --stage-2:#FAF6F1;
+  --stage-3:#DDD4C9;
+  --ink:#231C1A;
+  --ink-2:#6A5D50;
+  --muted:#8A7D70;
+  --line:#D8CFC2;
+  --line-soft:#DDD3C6;
+  --accent:#8A5A2A;
+  --accent-soft:#EFD9B4;
+  --pine:#2F2624;
+  --on-pine:#FAF6F1;
+  --shadow:0 30px 70px -30px rgba(22,33,28,.45), 0 4px 14px -6px rgba(22,33,28,.2);
+
+  --display:"Cormorant Garamond",Georgia,"Times New Roman",serif;
+  --ui:"DM Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --mono:"DM Sans",-apple-system,sans-serif;
+
+  /* app palette — fixed: a device screen keeps its own identity */
+  --app-bg:#FAF6F1;
+  --app-surface:#FFFFFF;
+  --app-ink:#231C1A;
+  --app-ink-2:#55453F;
+  --app-muted:#8A7D70;
+  --app-line:#E8DFD3;
+  --app-pine:#2F2624;
+  --app-pine-2:#4A3B36;
+  --app-marigold:#CB9F6E;
+  --app-marigold-ink:#7A4A1E;
+  --app-clay:#9F4429;
+  --app-clay-soft:#F5E6D6;
+  --app-mint:#EFE7DD;
+  --app-sand:#F3E7D8;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --stage:#120D0C;
+    --stage-2:#1A1311;
+    --stage-3:#241B19;
+    --ink:#ECE4DA;
+    --ink-2:#D3CCC3;
+    --muted:#A89B8E;
+    --line:#3A2E2A;
+    --line-soft:#2E2320;
+    --accent:#CB9F6E;
+    --accent-soft:#3A2E17;
+    --pine:#CB9F6E;
+    --on-pine:#120D0C;
+    --shadow:0 40px 90px -40px rgba(0,0,0,.8), 0 4px 18px -8px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --stage:#120D0C;
+  --stage-2:#1A1311;
+  --stage-3:#241B19;
+  --ink:#ECE4DA;
+  --ink-2:#D3CCC3;
+  --muted:#A89B8E;
+  --line:#3A2E2A;
+  --line-soft:#2E2320;
+  --accent:#CB9F6E;
+  --accent-soft:#3A2E17;
+  --pine:#CB9F6E;
+  --on-pine:#120D0C;
+  --shadow:0 40px 90px -40px rgba(0,0,0,.8), 0 4px 18px -8px rgba(0,0,0,.6);
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--stage);
+  color:var(--ink);
+  font-family:var(--ui);
+  font-size:15px;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{margin:0;text-wrap:balance}
+p{margin:0}
+ul{margin:0;padding:0;list-style:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+.eyebrow{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--muted);
+}
+
+/* ============================================================
+   PAGE CHROME
+   ============================================================ */
+.topbar{
+  display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+  padding:18px 28px;border-bottom:1px solid var(--line);
+  background:var(--stage-2);
+}
+.mark{
+  width:38px;height:38px;border-radius:11px;flex:none;
+  background:var(--pine);color:var(--on-pine);
+  display:grid;place-items:center;
+  font-family:var(--display);font-weight:700;font-size:16px;letter-spacing:.02em;
+}
+.topbar-title{display:flex;flex-direction:column;gap:1px;margin-right:auto}
+.topbar-title strong{font-family:var(--display);font-weight:600;font-size:19px;letter-spacing:-.01em}
+.topbar-title span{font-size:12.5px;color:var(--muted)}
+.tag{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  padding:5px 9px;border-radius:6px;border:1px solid var(--line);color:var(--muted);
+}
+.tag.hot{border-color:var(--accent);color:var(--accent)}
+.tag.toggle{cursor:pointer;transition:background .15s,color .15s,border-color .15s}
+.tag.toggle:hover{border-color:var(--ink-2);color:var(--ink)}
+.tag.toggle[aria-pressed="true"]{background:var(--pine);border-color:var(--pine);color:var(--on-pine)}
+
+/* ============================================================
+   THREE-COLUMN STAGE
+   ============================================================ */
+.layout{
+  display:grid;
+  grid-template-columns:238px minmax(0,1fr);
+  gap:0;
+  align-items:start;
+  min-height:calc(100vh - 76px);
+}
+/* Demo view is the default: Italian prototype only, no English on screen.
+   The "Note" button (or N) reveals the presenter notes. */
+body[data-notes="on"] .notes{display:block}
+@media (min-width:1181px){
+  body[data-notes="on"] .layout{grid-template-columns:238px minmax(0,1fr) 340px}
+}
+.rail{
+  border-right:1px solid var(--line);
+  padding:22px 16px 40px;
+  position:sticky;top:0;
+  max-height:100vh;overflow-y:auto;
+}
+.rail-group{margin-bottom:18px}
+.rail-group > .eyebrow{padding:0 10px 7px}
+.rail-item{
+  display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+  padding:8px 10px;border-radius:9px;color:var(--ink-2);
+  font-size:13.5px;font-weight:500;transition:background .15s,color .15s;
+}
+.rail-item:hover{background:var(--stage-3);color:var(--ink)}
+.rail-item .num{
+  font-family:var(--mono);font-size:10.5px;color:var(--muted);
+  width:18px;flex:none;
+}
+.rail-item[aria-current="true"]{background:var(--pine);color:var(--on-pine);font-weight:600}
+.rail-item[aria-current="true"] .num{color:inherit;opacity:.65}
+
+.stage{
+  padding:30px 20px 48px;
+  display:flex;flex-direction:column;align-items:center;gap:18px;
+  background:
+    radial-gradient(680px 420px at 50% 18%, color-mix(in srgb, var(--accent) 11%, transparent), transparent 70%),
+    var(--stage);
+}
+.stage-hint{
+  display:flex;align-items:center;gap:9px;color:var(--muted);font-size:12.5px;
+}
+.stage-hint .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex:none}
+
+.notes{
+  display:none;
+  border-left:1px solid var(--line);
+  padding:26px 24px 48px;
+  position:sticky;top:0;
+  max-height:100vh;overflow-y:auto;
+  background:var(--stage-2);
+}
+
+/* ============================================================
+   PHONE FRAME
+   ============================================================ */
+.phone-wrap{
+  --s:1;
+  width:calc(414px * var(--s));
+  height:calc(836px * var(--s));
+}
+.phone{
+  width:414px;height:836px;
+  transform:scale(var(--s));transform-origin:top center;
+  border-radius:50px;
+  background:linear-gradient(160deg,#2F2624,#150F0E 55%,#2B201E);
+  padding:12px;
+  box-shadow:var(--shadow), 0 0 0 1.5px rgba(255,255,255,.07) inset;
+  position:relative;
+}
+.phone::after{
+  content:"";position:absolute;left:50%;transform:translateX(-50%);
+  top:24px;width:104px;height:26px;border-radius:14px;background:#0A0605;z-index:6;
+}
+.screen{
+  width:100%;height:100%;border-radius:39px;overflow:hidden;
+  background:var(--app-bg);color:var(--app-ink);
+  display:flex;flex-direction:column;position:relative;
+}
+
+/* status bar */
+.statusbar{
+  height:48px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;
+  padding:0 26px 4px;font-size:12.5px;font-weight:700;letter-spacing:.01em;
+  position:relative;z-index:5;
+}
+.statusbar.on-dark{color:#fff}
+.sb-right{display:flex;align-items:center;gap:5px}
+.sb-bar{width:3px;border-radius:1px;background:currentColor}
+.sb-batt{width:22px;height:11px;border:1.4px solid currentColor;border-radius:3px;position:relative;opacity:.9}
+.sb-batt::before{content:"";position:absolute;inset:2px;right:6px;background:currentColor;border-radius:1px}
+
+/* scrolling body */
+.app-scroll{flex:1;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}
+.app-scroll::-webkit-scrollbar{display:none}
+.pad{padding:0 20px}
+.stack{display:flex;flex-direction:column}
+
+/* app views */
+.view{display:none;height:100%;flex-direction:column}
+.view.active{display:flex}
+
+/* ============================================================
+   APP COMPONENTS
+   ============================================================ */
+.a-h1{font-family:var(--display);font-size:27px;font-weight:600;letter-spacing:-.02em;line-height:1.15}
+.a-h2{font-family:var(--display);font-size:19px;font-weight:600;letter-spacing:-.015em}
+.a-h3{font-size:14.5px;font-weight:700;letter-spacing:-.01em}
+.a-label{
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--app-muted);
+}
+.a-meta{font-size:12px;color:var(--app-muted);font-weight:500}
+
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:11px}
+.sec-head .link{font-size:12px;font-weight:600;color:var(--app-pine-2)}
+
+.appbar{
+  flex:none;display:flex;align-items:center;gap:12px;padding:2px 20px 14px;
+}
+.appbar .a-h2{margin-right:auto}
+.icon-btn{
+  width:36px;height:36px;border-radius:11px;flex:none;
+  display:grid;place-items:center;background:var(--app-surface);
+  border:1px solid var(--app-line);color:var(--app-ink-2);
+}
+.icon-btn.ghost{background:transparent;border-color:transparent}
+.icon-btn.on-dark{background:rgba(255,255,255,.16);border-color:transparent;color:#fff}
+
+.card{
+  background:var(--app-surface);border:1px solid var(--app-line);
+  border-radius:18px;padding:14px;
+}
+
+/* thumbnails built from gradients + line art, no external assets */
+.thumb{
+  position:relative;overflow:hidden;border-radius:14px;flex:none;
+  background:linear-gradient(145deg,var(--t1,#3C6455),var(--t2,#1E3A30));
+}
+.thumb > svg:not(.ico){position:absolute;inset:0;width:100%;height:100%}
+.thumb > svg.ico{position:relative}
+.thumb .dur{
+  position:absolute;right:6px;bottom:6px;z-index:2;
+  font-family:var(--mono);font-size:9.5px;color:#fff;
+  background:rgba(11,16,14,.62);padding:2px 5px;border-radius:5px;
+}
+.t-river{--t1:#7FA7B5;--t2:#2D5566}
+.t-terra{--t1:#B07A55;--t2:#4F3223}
+.t-raiva{--t1:#4A5A57;--t2:#161C1B}
+.t-spa{--t1:#B7C4B0;--t2:#586B5C}
+.t-star{--t1:#3C4466;--t2:#12152B}
+.t-wine{--t1:#9C5B6B;--t2:#46202B}
+.t-sunset{--t1:#CB9F6E;--t2:#8C3F46}
+.t-canyon{--t1:#6FA39A;--t2:#1F5249}
+.t-hills{--t1:#9FB28F;--t2:#47573F}
+.t-gift{--t1:#D9B79A;--t2:#7A5238}
+.t-pool{--t1:#7FB6B8;--t2:#2C6568}
+.t-house{--t1:#B1845B;--t2:#3A2A22}
+.t-fire{--t1:#C0703A;--t2:#3A1E0E}
+.t-sem{--t1:#9A7A55;--t2:#2E2118}
+.t-beef{--t1:#8A3A30;--t2:#2A1210}
+.t-sado{--t1:#C9A06A;--t2:#5A3A1C}
+.t-da{--t1:#C86A3A;--t2:#5A2210}
+.t-spa{--t1:#9FB3A8;--t2:#3E5248}
+.t-wine{--t1:#8E5568;--t2:#3E1D2A}
+.t-bar{--t1:#C9893A;--t2:#4C2A10}
+.t-romance{--t1:#B45A4A;--t2:#3A1612}
+.t-padel{--t1:#7E9D92;--t2:#2A4038}
+.t-yoga{--t1:#C9A58A;--t2:#6A4A3A}
+.t-event{--t1:#7A6A5A;--t2:#2A211A}
+.t-gift{--t1:#CB9F6E;--t2:#7A4A1E}
+.t-pool{--t1:#7FA0AE;--t2:#2B4452}
+.t-pilates{--t1:#3E6858;--t2:#1D362C}
+.t-yoga{--t1:#5C7F8C;--t2:#2A414B}
+.t-flow{--t1:#B07B2E;--t2:#5E3D11}
+.t-mobility{--t1:#6E7F5A;--t2:#33402A}
+.t-zumba{--t1:#C0705E;--t2:#6B3226}
+.t-prenatal{--t1:#C99A9A;--t2:#7A4E52}
+
+/* horizontal rails */
+.hrail{display:flex;gap:12px;overflow-x:auto;padding:2px 20px 4px;scrollbar-width:none}
+.hrail::-webkit-scrollbar{display:none}
+
+/* class list row */
+.row{
+  display:flex;gap:12px;align-items:center;width:100%;text-align:left;
+  background:var(--app-surface);border:1px solid var(--app-line);
+  border-radius:16px;padding:9px;transition:border-color .15s,transform .1s;
+}
+.row:hover{border-color:var(--app-pine-2)}
+.row:active{transform:scale(.99)}
+.row .thumb{width:70px;height:62px}
+.row-body{min-width:0;flex:1;display:flex;flex-direction:column;gap:3px}
+.row-body .t{font-size:13.5px;font-weight:700;letter-spacing:-.01em;line-height:1.25}
+
+/* pills / chips */
+.pill{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:11px;font-weight:600;padding:3px 8px;border-radius:999px;
+  background:var(--app-mint);color:var(--app-pine);
+}
+.pill.sand{background:var(--app-sand);color:var(--app-marigold-ink)}
+.pill.clay{background:var(--app-clay-soft);color:#8E4437}
+.pill.live{background:#FBE9E6;color:#A83B2A}
+
+.chips{display:flex;gap:8px;overflow-x:auto;padding:0 20px 2px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{
+  flex:none;font-size:12.5px;font-weight:600;padding:7px 13px;border-radius:999px;
+  border:1px solid var(--app-line);background:var(--app-surface);color:var(--app-ink-2);
+}
+.chip[aria-pressed="true"]{background:var(--app-pine);border-color:var(--app-pine);color:#fff}
+
+.seg{
+  display:flex;gap:3px;background:var(--app-line);padding:3px;border-radius:12px;
+}
+.seg button{
+  flex:1;font-size:12.5px;font-weight:600;padding:7px 4px;border-radius:9px;color:var(--app-ink-2);
+}
+.seg button[aria-pressed="true"]{background:var(--app-surface);color:var(--app-ink);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+
+/* buttons */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  font-size:14px;font-weight:700;padding:13px 18px;border-radius:14px;
+  background:var(--app-pine);color:#fff;width:100%;transition:filter .15s;
+}
+.btn:hover{filter:brightness(1.1)}
+.btn.amber{background:var(--app-marigold);color:#2A1B04}
+.btn.outline{background:transparent;border:1.5px solid var(--app-line);color:var(--app-ink)}
+.btn.sm{font-size:12.5px;padding:8px 14px;width:auto;border-radius:11px}
+
+/* progress */
+.bar{display:block;height:6px;border-radius:99px;background:var(--app-line);overflow:hidden}
+.bar > i{display:block;height:100%;border-radius:99px;background:var(--app-pine-2)}
+.bar.amber > i{background:var(--app-marigold)}
+.bar.clay > i{background:var(--app-clay)}
+
+/* tab bar */
+.tabbar{
+  flex:none;display:flex;padding:9px 8px 22px;
+  background:color-mix(in srgb, var(--app-surface) 88%, transparent);
+  backdrop-filter:blur(14px);
+  border-top:1px solid var(--app-line);
+}
+.tab{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  font-size:9.5px;font-weight:600;color:var(--app-muted);padding:4px 0;
+}
+.tab[aria-current="true"]{color:var(--app-pine)}
+.tab svg{width:21px;height:21px}
+
+/* hero blocks */
+.hero-pine{
+  background:linear-gradient(155deg,#3A2E2A,#211A18);color:#fff;position:relative;overflow:hidden;
+}
+.hero-pine .deco{position:absolute;inset:0;opacity:.55}
+
+/* stat grid */
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+.stat{background:var(--app-surface);border:1px solid var(--app-line);border-radius:15px;padding:11px 12px}
+.stat b{display:block;font-family:var(--display);font-size:22px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+
+/* schedule */
+.slot{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--app-line)}
+.slot:last-child{border-bottom:0}
+.slot .time{font-family:var(--mono);font-size:12px;font-weight:500;width:44px;flex:none;padding-top:2px}
+.week{display:flex;gap:6px}
+.day{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:8px 0;border-radius:12px;border:1px solid transparent;font-size:11px;color:var(--app-muted);
+}
+.day b{font-size:14px;color:var(--app-ink);font-variant-numeric:tabular-nums}
+.day[aria-pressed="true"]{background:var(--app-pine);border-color:var(--app-pine);color:rgba(255,255,255,.75)}
+.day[aria-pressed="true"] b{color:#fff}
+
+/* day rows in a program */
+.dayrow{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid var(--app-line);width:100%;text-align:left}
+.dayrow:last-child{border-bottom:0}
+.tick{
+  width:24px;height:24px;border-radius:50%;flex:none;display:grid;place-items:center;
+  border:1.5px solid var(--app-line);color:var(--app-muted);
+}
+.tick.done{background:var(--app-pine);border-color:var(--app-pine);color:#fff}
+.tick.today{border-color:var(--app-marigold);color:var(--app-marigold-ink);border-width:2px}
+
+/* quote from Roberta */
+.quote{
+  background:var(--app-sand);border-radius:16px;padding:13px 14px;
+  font-family:var(--display);font-size:14px;line-height:1.45;color:#4F3520;
+}
+.quote .who{display:block;margin-top:7px;font-family:var(--ui);font-size:11px;font-weight:700;letter-spacing:.02em;color:var(--app-marigold-ink)}
+
+/* settings list */
+.list-item{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:13px 0;border-bottom:1px solid var(--app-line);font-size:14px;font-weight:600}
+.list-item:last-child{border-bottom:0}
+.list-item .v{margin-left:auto;font-size:12.5px;font-weight:500;color:var(--app-muted)}
+
+/* plan cards */
+.plan{
+  width:100%;text-align:left;border:1.5px solid var(--app-line);background:var(--app-surface);
+  border-radius:18px;padding:14px;display:flex;gap:12px;align-items:flex-start;
+}
+.plan[aria-pressed="true"]{border-color:var(--app-pine);background:var(--app-mint)}
+.radio{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--app-line);flex:none;margin-top:2px;display:grid;place-items:center}
+.plan[aria-pressed="true"] .radio{border-color:var(--app-pine);background:var(--app-pine);color:#fff}
+
+/* toggle */
+.switch{width:42px;height:25px;border-radius:99px;background:var(--app-pine);position:relative;flex:none;margin-left:auto}
+.switch::after{content:"";position:absolute;top:2.5px;left:20px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .18s}
+.switch[aria-pressed="false"]{background:var(--app-line)}
+.switch[aria-pressed="false"]::after{left:2.5px}
+
+/* success burst */
+.burst{
+  width:76px;height:76px;border-radius:50%;display:grid;place-items:center;
+  background:var(--app-pine);color:#fff;margin:0 auto;
+  box-shadow:0 0 0 12px var(--app-mint);
+}
+
+/* ============================================================
+   NOTES PANEL
+   ============================================================ */
+.notes h2{font-family:var(--display);font-size:22px;font-weight:600;letter-spacing:-.02em;margin:6px 0 10px}
+.notes .n-list{display:flex;flex-direction:column;gap:9px;margin-top:6px}
+.notes .n-list li{display:flex;gap:9px;font-size:13.5px;color:var(--ink-2);line-height:1.5}
+.notes .n-list li::before{
+  content:"";width:5px;height:5px;border-radius:50%;background:var(--accent);
+  flex:none;margin-top:8px;
+}
+.n-why{
+  margin-top:20px;padding:14px;border-radius:13px;
+  background:var(--stage);border:1px solid var(--line-soft);
+}
+.n-why p{font-size:13.5px;color:var(--ink-2);margin-top:6px;line-height:1.5}
+.n-nav{display:flex;gap:8px;margin-top:22px}
+.n-nav button{
+  flex:1;display:flex;align-items:center;justify-content:center;gap:7px;
+  padding:10px;border-radius:11px;border:1px solid var(--line);
+  font-size:13px;font-weight:600;color:var(--ink-2);background:var(--stage-2);
+}
+.n-nav button:hover:not(:disabled){background:var(--stage-3);color:var(--ink)}
+.n-nav button:disabled{opacity:.4;cursor:not-allowed}
+.n-foot{margin-top:26px;padding-top:18px;border-top:1px solid var(--line-soft);font-size:12px;color:var(--muted);line-height:1.6}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width:1180px){
+  .layout{grid-template-columns:1fr;min-height:0}
+  .rail{
+    position:static;max-height:none;border-right:0;border-bottom:1px solid var(--line);
+    display:flex;gap:8px;overflow-x:auto;padding:12px 16px;
+  }
+  .rail-group{display:flex;align-items:center;gap:8px;margin:0}
+  .rail-group > .eyebrow{padding:0 4px 0 6px;white-space:nowrap}
+  .rail-item{width:auto;white-space:nowrap;border:1px solid var(--line);padding:7px 12px}
+  .rail-item .num{display:none}
+  .notes{position:static;max-height:none;border-left:0;border-top:1px solid var(--line)}
+}
+@media (max-width:520px){
+  .phone-wrap{--s:.78}
+  .stage{padding:20px 10px 34px}
+  .topbar{padding:14px 16px}
+}
+
+
+.a-h1{font-size:33px;font-weight:500;letter-spacing:-.01em;line-height:1.1}.a-h2{font-size:23px;font-weight:500;letter-spacing:-.005em}.stat b{font-size:23px;font-weight:500}
+.a-label,.eyebrow{font-weight:700;font-size:9.5px;letter-spacing:.12em}
+.quote{font-size:15px}.mark{font-size:20px;font-weight:600;border-radius:9px}.topbar-title strong{font-size:22px;font-weight:500}
+.btn{font-weight:700}.btn.amber{color:#2F2624}
+.pill.sand{color:#7A4A1E}
+.bubble{max-width:82%;padding:10px 13px;border-radius:16px;font-size:13.5px;line-height:1.45}
+.bubble.in{background:var(--app-surface);border:1px solid var(--app-line);border-bottom-left-radius:5px;align-self:flex-start}
+.bubble.out{background:var(--app-pine);color:#fff;border-bottom-right-radius:5px;align-self:flex-end}
+.bubble small{display:block;font-size:10.5px;opacity:.6;margin-top:4px}
+.bubble .acts{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.bubble .acts button{font-size:12px;font-weight:700;padding:6px 11px;border-radius:99px;background:var(--app-mint);color:#4A3B36}
+.typing{display:flex;gap:4px;padding:13px 14px}.typing i{width:6px;height:6px;border-radius:50%;background:var(--app-muted);animation:bl 1s infinite}.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes bl{0%,60%,100%{opacity:.25}30%{opacity:1}}
+.slotgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.slotbtn{padding:10px 4px;border-radius:13px;border:1.5px solid var(--app-line);background:var(--app-surface);text-align:center;font-size:13px;font-weight:700}
+.slotbtn small{display:block;font-size:10.5px;font-weight:500;color:var(--app-muted);margin-top:1px}
+.slotbtn[aria-pressed="true"]{border-color:#CB9F6E;background:#F5E6D6;color:#7A4A1E}
+.slotbtn:disabled{opacity:.45;cursor:not-allowed}
+.chip[aria-pressed="true"]{background:var(--app-pine);border-color:var(--app-pine)}
+.stepper{display:flex;align-items:center;gap:12px}
+.stepper button{width:32px;height:32px;border-radius:50%;border:1.5px solid var(--app-line);background:var(--app-surface);font-size:17px;font-weight:700;line-height:1}
+.stepper b{font-family:var(--display);font-size:22px;font-weight:500;min-width:20px;text-align:center}
+.qgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+.qa{display:flex;gap:10px;align-items:center;text-align:left;padding:12px;border-radius:15px;background:var(--app-surface);border:1px solid var(--app-line);font-size:13px;font-weight:700;line-height:1.25}
+.qa i{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:var(--app-mint);color:#4A3B36;flex:none}
+.qa:hover{border-color:#CB9F6E}
+.menu-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--app-line);align-items:flex-start}
+.menu-item:last-child{border-bottom:0}
+.timeline{position:relative;padding-left:22px}
+.timeline::before{content:"";position:absolute;left:6px;top:6px;bottom:6px;width:2px;background:var(--app-line)}
+.tl{position:relative;padding:0 0 16px}
+.tl::before{content:"";position:absolute;left:-21px;top:4px;width:12px;height:12px;border-radius:50%;background:var(--app-surface);border:2.5px solid var(--app-pine-2)}
+.tl.now::before{border-color:#CB9F6E;background:#CB9F6E}
+.tl.sug::before{border-style:dashed;border-color:var(--app-muted)}
+.tl .t{font-size:11px;color:var(--app-muted);font-weight:700}
+.payopt{width:100%;text-align:left;display:flex;gap:12px;align-items:center;padding:13px;border:1.5px solid var(--app-line);border-radius:15px;background:var(--app-surface);font-size:13.5px;font-weight:700}
+.payopt[aria-pressed="true"]{border-color:#CB9F6E;background:#F5E6D6}
+.payopt .radio{margin:0}
+.payopt[aria-pressed="true"] .radio{border-color:#CB9F6E;background:#CB9F6E;color:#2F2624}
+.qrbox{background:#fff;border-radius:20px;padding:16px;border:1px solid var(--app-line);display:grid;place-items:center}
+.hrow{display:flex;gap:12px;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--app-line)}
+.hrow:last-child{border-bottom:0}.hrow b{font-size:13.5px;font-weight:700}.hrow .h{margin-left:auto;font-size:12.5px;color:var(--app-ink-2);font-variant-numeric:tabular-nums;text-align:right}
+.price{font-weight:700;font-size:13.5px;font-variant-numeric:tabular-nums;margin-left:auto;white-space:nowrap}
+.burst{background:#CB9F6E;color:#2F2624;box-shadow:0 0 0 12px #F5E6D6}
+.step{display:flex;gap:12px;align-items:center;padding:13px 0;border-bottom:1px solid var(--app-line);width:100%;text-align:left}
+.step:last-child{border-bottom:0}
+.tick.done{background:#7E9D92;border-color:#7E9D92}
+.rowlist .menu-item{align-items:center}
+</style></head><body>
+<svg style="display:none" aria-hidden="true"><symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/><path d="M10 20v-5h4v5"/></symbol><symbol id="i-compass" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></symbol><symbol id="i-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/></symbol><symbol id="i-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol><symbol id="i-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></symbol><symbol id="i-key" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3M14 9l2 2"/></symbol><symbol id="i-drop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></symbol><symbol id="i-fork" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v8a2 2 0 0 0 2 2v8M11 3v8a2 2 0 0 1-2 2M7 3v6M17 21V3c-2.5 1.5-3 5-3 8h3"/></symbol><symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M5 5l1.8 1.8M17.2 17.2L19 19M19 5l-1.8 1.8M6.8 17.2L5 19"/></symbol><symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A15 15 0 0 1 3 6a2 2 0 0 1 2-2z"/></symbol><symbol id="i-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></symbol><symbol id="i-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></symbol><symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></symbol><symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 10a5.5 5.5 0 0 1 11 0c0 4 1.5 5.5 1.5 5.5H5S6.5 14 6.5 10z"/><path d="M10 19a2.2 2.2 0 0 0 4 0"/></symbol><symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s6.5-6.1 6.5-10.5a6.5 6.5 0 1 0-13 0C5.5 14.9 12 21 12 21z"/><circle cx="12" cy="10.5" r="2.4"/></symbol><symbol id="i-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12L20 4l-6 16-2.5-6.5z"/></symbol><symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></symbol><symbol id="i-card" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10.5h18M7 15h3"/></symbol><symbol id="i-qr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 14h2v2h-2zM18 14h2v6h-4M14 18h2"/></symbol><symbol id="i-share" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4"/><path d="M8.5 7.5L12 4l3.5 3.5"/><path d="M5.5 13v5.5a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V13"/></symbol><symbol id="i-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></symbol><symbol id="i-gift" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v8h14v-8M12 8c-2-4-6-3-5 0 .6 1.6 3 1.5 5 0zM12 8c2-4 6-3 5 0-.6 1.6-3 1.5-5 0z"/></symbol><symbol id="i-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.3"/></symbol><symbol id="i-paw" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="9" r="1.8"/><circle cx="12" cy="6.500" r="1.8"/><circle cx="17" cy="9" r="1.8"/><path d="M12 12c-3 0-5 2.500-5 4.500 0 1.500 1.500 2 3 1.500 1-.300 1.500-.500 2-.500s1 .200 2 .500c1.500.500 3 0 3-1.500 0-2-2-4.500-5-4.500z"/></symbol><symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.500A8 8 0 0 1 9.500 4a8 8 0 1 0 10.500 10.500z"/></symbol></svg>
+<header class="topbar"><div class="mark">S</div><div class="topbar-title"><strong>Sublime&nbsp;Comporta&nbsp;Guest&nbsp;App</strong><span>Concept prototype · a branded guest app for Sublime Comporta</span></div><span class="tag hot">Clickable</span><span class="tag">14 screens</span><span class="tag">iOS &amp; Android</span><button class="tag toggle" id="notes-toggle" aria-pressed="false" title="Presenter notes (N)">Notes</button></header>
+<div class="layout"><nav class="rail" id="rail" aria-label="Screen index">
+<div class="rail-group"><div class="eyebrow">Arrival</div><button class="rail-item" data-go="welcome"><span class="num">01</span>Welcome</button><button class="rail-item" data-go="home"><span class="num">02</span>Today</button></div>
+<div class="rail-group"><div class="eyebrow">Discover</div><button class="rail-item" data-go="experiences"><span class="num">03</span>Experiences</button><button class="rail-item" data-go="dining"><span class="num">04</span>Dining</button><button class="rail-item" data-go="spa"><span class="num">05</span>Spa &amp; wellness</button><button class="rail-item" data-go="events"><span class="num">06</span>What's open</button></div>
+<div class="rail-group"><div class="eyebrow">Book without calling</div><button class="rail-item" data-go="slots"><span class="num">07</span>Pick a time</button><button class="rail-item" data-go="checkout"><span class="num">08</span>Checkout</button><button class="rail-item" data-go="confirmed"><span class="num">09</span>Confirmed</button><button class="rail-item" data-go="pass"><span class="num">10</span>Reservation pass</button></div>
+<div class="rail-group"><div class="eyebrow">During your stay</div><button class="rail-item" data-go="chat"><span class="num">11</span>The team</button><button class="rail-item" data-go="services"><span class="num">12</span>Room &amp; services</button><button class="rail-item" data-go="offers"><span class="num">13</span>Offers</button><button class="rail-item" data-go="stay"><span class="num">14</span>My stay</button></div></nav><main class="stage"><div class="phone-wrap"><div class="phone"><div class="screen">
+<section class="view" data-view="welcome" style="background:linear-gradient(180deg,#2F2624 0%,#211A18 31%,#FAF6F1 31.1%,#FAF6F1 100%)"><div class="statusbar on-dark"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="app-scroll" style="display:flex;flex-direction:column">
+<div style="position:relative;height:204px;flex:none;display:grid;place-items:center;overflow:hidden"><img alt="Sublime Comporta" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9Ijc0IiB2aWV3Qm94PSIwIDAgMjUwIDc0IiBmaWxsPSIjRjNFQUUwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxwYXRoIGQ9Ik04OS4zMDUyIDcxLjMzMDNDODguMzgyMyA3Mi4yMzU1IDg2Ljk4ODkgNzMuMDE0IDg1LjI1MTcgNzMuMDE0QzgyLjUxOTEgNzMuMDE0IDgwLjYwMDkgNzEuMDA0NCA4MC42MDA5IDY4LjU0MjJDODAuNjAwOSA2Ni4wODAxIDgyLjUxOTEgNjQuMDcwNSA4NS4xOTc0IDY0LjA3MDVDODYuNzE3NSA2NC4wNzA1IDg4LjEyOSA2NC42NDk4IDg5LjA3IDY1LjUzNjlMODguMzA5OSA2Ni4yOTczQzg3LjUzMTggNjUuNTU1IDg2LjMzNzQgNjUuMDg0MyA4NS4yMzM2IDY1LjA4NDNDODMuMjA2OCA2NS4wODQzIDgxLjc5NTMgNjYuNjU5NCA4MS43OTUzIDY4LjU2MDNDODEuNzk1MyA3MC40NjEzIDgzLjIyNDkgNzIuMDE4MyA4NS4yNjk4IDcyLjAxODNDODYuNjI3IDcyLjAxODMgODcuNzg1MiA3MS4zODQ2IDg4LjU2MzMgNzAuNTg4TDg5LjMyMzMgNzEuMzMwM0g4OS4zMDUyWiIvPjxwYXRoIGQ9Ik05Ni42NzA1IDY0LjA4ODJDOTkuMjk0NSA2NC4wODgyIDEwMS4zOTQgNjYuMDc5NyAxMDEuMzk0IDY4LjU0MTlDMTAxLjM5NCA3MS4wMDQxIDk5LjI5NDUgNzMuMDMxNyA5Ni42NzA1IDczLjAzMTdDOTQuMDQ2NSA3My4wMzE3IDkxLjk4MzYgNzEuMDQwMyA5MS45ODM2IDY4LjU0MTlDOTEuOTgzNiA2Ni4wNDM1IDk0LjA0NjUgNjQuMDg4MiA5Ni42NzA1IDY0LjA4ODJaTTk2LjY3MDUgNzIuMDE3OUM5OC42NjExIDcyLjAxNzkgMTAwLjE5OSA3MC40NjEgMTAwLjE5OSA2OC41MjM4QzEwMC4xOTkgNjYuNTg2NiA5OC42NDMgNjUuMDg0IDk2LjY3MDUgNjUuMDg0Qzk0LjY5OCA2NS4wODQgOTMuMTU5OCA2Ni42MjI5IDkzLjE1OTggNjguNTIzOEM5My4xNTk4IDcwLjQyNDggOTQuNjc5OSA3Mi4wMTc5IDk2LjY3MDUgNzIuMDE3OVoiLz48cGF0aCBkPSJNMTEyLjU5NSA3Mi43OTY2VjY2LjM1MTVIMTEyLjUyMkwxMDkuNDY0IDcxLjUxMTJIMTA5LjIyOUwxMDYuMTcxIDY2LjM1MTVIMTA2LjA5OFY3Mi43OTY2SDEwNS4wM1Y2NC4zMDU3SDEwNi4yMjVMMTA5LjM5MiA2OS42NDY1SDEwOS40MUwxMTIuNTc3IDY0LjMwNTdIMTEzLjcxN1Y3Mi43OTY2SDExMi41OTVaIi8+PHBhdGggZD0iTTExOC4xNTEgNzIuNzk2NlY2NC4zMDU3SDEyMi43MjlDMTIzLjgzMyA2NC4zMDU3IDEyNC41NzUgNjQuNjEzNSAxMjUuMSA2NS4xNTY2QzEyNS41MzQgNjUuNjI3MyAxMjUuNzUxIDY2LjIwNjYgMTI1Ljc1MSA2Ni44MDQxQzEyNS43NTEgNjcuNTEwMSAxMjUuNDYyIDY4LjEyNTcgMTI0Ljk5MSA2OC41NjAyQzEyNC40ODUgNjkuMDQ5IDEyMy43NzkgNjkuMzM4NyAxMjIuNzI5IDY5LjMzODdIMTE5LjI5MVY3Mi43OTY2SDExOC4xNTFaTTExOS4yNzMgNjguMzI0OEgxMjIuNzExQzEyMy4xODIgNjguMzI0OCAxMjMuNzI1IDY4LjI1MjQgMTI0LjE1OSA2Ny44MzZDMTI0LjQ0OSA2Ny41NjQ1IDEyNC42MTEgNjcuMTg0MyAxMjQuNjExIDY2Ljc4NkMxMjQuNjExIDY2LjM4NzcgMTI0LjQ2NyA2Ni4wNzk5IDEyNC4yMTMgNjUuNzkwMkMxMjMuODE1IDY1LjM1NTcgMTIzLjI3MiA2NS4yNjUyIDEyMi43MTEgNjUuMjY1MkgxMTkuMjczVjY4LjMyNDhaIi8+PHBhdGggZD0iTTEzMy4wNDQgNjQuMDg4MkMxMzUuNjY4IDY0LjA4ODIgMTM3Ljc2NyA2Ni4wNzk3IDEzNy43NjcgNjguNTQxOUMxMzcuNzY3IDcxLjAwNDEgMTM1LjY2OCA3My4wMzE3IDEzMy4wNDQgNzMuMDMxN0MxMzAuNDIgNzMuMDMxNyAxMjguMzU3IDcxLjA0MDMgMTI4LjM1NyA2OC41NDE5QzEyOC4zNTcgNjYuMDQzNSAxMzAuNDIgNjQuMDg4MiAxMzMuMDQ0IDY0LjA4ODJaTTEzMy4wNDQgNzIuMDE3OUMxMzUuMDM0IDcyLjAxNzkgMTM2LjU3MiA3MC40NjEgMTM2LjU3MiA2OC41MjM4QzEzNi41NzIgNjYuNTg2NiAxMzUuMDE2IDY1LjA4NCAxMzMuMDQ0IDY1LjA4NEMxMzEuMDcxIDY1LjA4NCAxMjkuNTMzIDY2LjYyMjkgMTI5LjUzMyA2OC41MjM4QzEyOS41MzMgNzAuNDI0OCAxMzEuMDUzIDcyLjAxNzkgMTMzLjA0NCA3Mi4wMTc5WiIvPjxwYXRoIGQ9Ik0xNDEuNDIyIDcyLjc5NjZWNjQuMzA1N0gxNDYuMDkxQzE0Ny4xNzcgNjQuMzA1NyAxNDcuOTM3IDY0LjYxMzUgMTQ4LjQ2MiA2NS4xNTY2QzE0OC44NzggNjUuNTkxMSAxNDkuMTEzIDY2LjE3MDQgMTQ5LjExMyA2Ni44MjIyQzE0OS4xMTMgNjcuOTYyOCAxNDguMzM1IDY4Ljg2OCAxNDcuMTQxIDY5LjE5MzhMMTQ5LjIyMiA3Mi43OTY2SDE0Ny45MzdMMTQ2LjAwMSA2OS4zMzg3SDE0Mi41NjJWNzIuNzk2NkgxNDEuNDIyWk0xNDIuNTQ0IDY4LjMyNDhIMTQ2LjM2M0MxNDcuMzA0IDY4LjMyNDggMTQ3Ljk3MyA2Ny42MzY5IDE0Ny45NzMgNjYuODA0MUMxNDcuOTczIDY2LjQyMzkgMTQ3LjgxIDY2LjA3OTkgMTQ3LjU3NSA2NS44MDg0QzE0Ny4xNTkgNjUuMzkyIDE0Ni42NTIgNjUuMjgzMyAxNDYuMDczIDY1LjI4MzNIMTQyLjU0NFY2OC4zMjQ4WiIvPjxwYXRoIGQ9Ik0xNTEuNzU2IDY0LjMwNTdIMTU5LjQ0N1Y2NS4zMDE0SDE1Ni4xNzFWNzIuNzk2NkgxNTUuMDQ5VjY1LjMwMTRIMTUxLjc1NlY2NC4zMDU3WiIvPjxwYXRoIGQ9Ik0xNjAuODc2IDcyLjc5NjZMMTY0LjgwMyA2NC4zMDU3SDE2NS44NzFMMTY5Ljc5NyA3Mi43OTY2SDE2OC41NjdMMTY3LjQwOSA3MC4yNDM5SDE2My4xOTJMMTYyLjA1MiA3Mi43OTY2SDE2MC44NzZaTTE2My41OSA2OS4zMzg3SDE2Ny4wMTFMMTY1LjM0NiA2NS42MjczSDE2NS4yNzNMMTYzLjYwOCA2OS4zMzg3SDE2My41OVoiLz48cGF0aCBkPSJNMTIuMzQxNyAzOS4yNjgyQzQuOTc2NDggMzkuMjY4MiAwLjQ4ODU5OSAzNS45MDA4IDAuMzA3NjM3IDM1Ljc1NTlMMCAzNS41MjA2VjI5Ljg3MkMwIDI5Ljg3MiA3LjMxMDkgMzYuMDgxOCAxMy4xNzQxIDM2LjA4MThDMTguMzQ5NiAzNi4wODE4IDIxLjk2ODkgMzMuMTg1MSAyMS45Njg5IDI5LjAyMTFDMjEuOTY4OSAyNC4yNTk3IDE3Ljg0MjkgMjIuNTM5OCAxMy40OTk4IDIwLjcxMTNDMTIuODY2NSAyMC40Mzk3IDEyLjIzMzEgMjAuMTg2MyAxMS42MTc4IDE5Ljg5NjZMMTAuNzY3MyAxOS41MTY0QzUuOTg5ODcgMTcuMzgwMSAxLjA0OTU4IDE1LjE3MTQgMS4wNDk1OCA5LjMyMzY5QzEuMDQ5NTggMy40NzYwMSA1LjczNjUyIDAgMTIuNzIxNyAwQzE3LjkzMzQgMCAyMS4yNjMxIDEuODY0NzMgMjMuMTI3IDMuNDM5OEwyMy40MTY2IDMuNjc1MTZWOS4xOTY5N0MyMy40MTY2IDkuMTk2OTcgMTguMjIyOSAzLjI1ODc3IDEyLjEwNjQgMy4yNTg3N0M3LjY1NDczIDMuMjU4NzcgNC45NzY0OCA1LjA2OTIgNC45NzY0OCA4LjEyODgzQzQuOTc2NDggMTIuMjAyMyA5Ljg0NDM3IDE0LjM3NDggMTMuNDA5MyAxNS45NjhMMTMuNzE3IDE2LjExMjhDMTQuMjQxOCAxNi4zNDgxIDE0LjgzODkgMTYuNTgzNSAxNS40NzIzIDE2LjgzN0MxOS41NjIxIDE4LjQ4NDUgMjUuNzMyOSAyMC45NjQ4IDI1LjczMjkgMjguMTg4NEMyNS43MzI5IDM1Ljg2NDYgMTkuMDAxMSAzOS4zMDQ0IDEyLjM0MTcgMzkuMzA0NFYzOS4yNjgyWiIvPjxwYXRoIGQ9Ik01Mi4wODEgMzkuMzIyQzQyLjk0MjQgMzkuMzIyIDM3LjAyNDkgMzMuNjE5MiAzNy4wMjQ5IDI0LjgwMjRWMTIuNDkxNUMzNy4wMjQ5IDguNjUzMzkgMzYuNTAwMSAwLjU0MjY5NyAzNi41MDAxIDAuNTQyNjk3SDQxLjY5MzdDNDEuNjkzNyAwLjU0MjY5NyA0MS4xNjg5IDguNjUzMzkgNDEuMTY4OSAxMi40OTE1TDQxLjExNDYgMjQuODAyNEM0MS4wOTY2IDI4LjMxNDYgNDIuMTA5OSAzMS4xOTMyIDQ0LjA0NjIgMzMuMTQ4NUM0NS45NjQ1IDM1LjA2NzUgNDguNjYwOCAzNi4wNDUyIDUyLjA5OTEgMzYuMDQ1MkM1OS4xNTY2IDM2LjA0NTIgNjMuNTM1OSAzMS43MzYzIDYzLjUzNTkgMjQuNzg0M1YxMi40NzM0QzYzLjUzNTkgOS43MDM0NSA2Mi43Mzk3IDAuNTI0NTc1IDYyLjczOTcgMC41MjQ1NzVINjcuOTMzM0M2Ny45MzMzIDAuNTI0NTc1IDY3LjEzNzEgOS43MDM0NSA2Ny4xMzcxIDEyLjQ3MzRWMjQuNzg0M0M2Ny4xMzcxIDMzLjYwMTEgNjEuMjE5NiAzOS4zMDM5IDUyLjA4MSAzOS4zMDM5VjM5LjMyMloiLz48cGF0aCBkPSJNODAuNDkyNSAzOC43OTc1QzgwLjQ5MjUgMzguNzk3NSA4MS4wMTczIDMwLjY4NjggODEuMDE3MyAyNi44NDg3VjEyLjQzNzdDODEuMDE3MyA4LjkyNTQ3IDgwLjQ5MjUgMC41NDMyMTQgODAuNDkyNSAwLjU0MzIxNEg5My43Mzg5QzEwMS45NzMgMC41NDMyMTQgMTA2LjEzNSAzLjYyMDkzIDEwNi4xMzUgOS43MjIwNkMxMDYuMTM1IDEyLjk2MjcgMTA0LjU2MSAxNS43MTQ2IDEwMS45MTggMTcuMjUzNEMxMDUuOTcyIDE4Ljk5MTUgMTA4LjQ4NyAyMi43NzUyIDEwOC40ODcgMjcuMzczN0MxMDguNDg3IDM0LjUyNDkgMTAzLjM4NCAzOC43OTc1IDk0Ljg0MjggMzguNzk3NUg4MC40OTI1Wk05NC43NzA0IDM1LjU3NUMxMDIuOTE0IDM1LjU3NSAxMDQuMTI2IDMwLjQzMzQgMTA0LjEyNiAyNy4zNTU2QzEwNC4xMjYgMjAuNjAyNyA5OS4wNTkzIDE5LjE5MDYgOTQuODI0NyAxOS4xOTA2SDg1LjE0MzJWMzUuNTc1SDk0Ljc3MDRaTTk0LjgyNDcgMTUuOTg2MkM5OS42MjAyIDE1Ljk4NjIgMTAxLjk1NSAxMy45NDA0IDEwMS45NTUgOS43MDM5N0MxMDEuOTU1IDUuNDY3NTcgOTkuNTExNyAzLjcyOTU2IDk0LjI2MzcgMy43Mjk1Nkg4NS4xNjEzVjE1Ljk2ODFIOTQuODQyOEw5NC44MjQ3IDE1Ljk4NjJaIi8+PHBhdGggZD0iTTExOS45MDYgMzguNzk3NUMxMTkuOTA2IDM4Ljc5NzUgMTIwLjMyMiAzMC4xOTggMTIwLjMyMiAyNi44NDg3TDEyMC4yNjggMTIuNDkyQzEyMC4yNjggOC41NDUyOCAxMTkuNzQzIDAuNTQzMjE0IDExOS43NDMgMC41NDMyMTRIMTI0LjkzN0MxMjQuOTM3IDAuNTQzMjE0IDEyNC40MTIgOC42NTM5MSAxMjQuNDEyIDEyLjQ5MlYzNS41OTMxSDEyOC4xMDRDMTMyLjU5MiAzNS41OTMxIDE0My4zNzcgMzMuODAwNyAxNDMuMzc3IDMzLjgwMDdWMzguNzk3NUgxMTkuOTA2WiIvPjxwYXRoIGQ9Ik0xNTQuNjMyIDM4Ljc5NzVDMTU0LjYzMiAzOC43OTc1IDE1NS4yMTEgMzAuMTk4IDE1NS4yMTEgMjYuODQ4N0wxNTUuMTU3IDEyLjQ5MkMxNTUuMTU3IDguNjUzOTEgMTU0LjYzMiAwLjU0MzIxNCAxNTQuNjMyIDAuNTQzMjE0SDE1OS44OEMxNTkuODggMC41NDMyMTQgMTU5LjMwMSA5LjE0MjcyIDE1OS4zMDEgMTIuNDkyVjI2Ljg0ODdDMTU5LjMwMSAzMC4xOTggMTU5Ljg4IDM4Ljc5NzUgMTU5Ljg4IDM4Ljc5NzVIMTU0LjYzMloiLz48cGF0aCBkPSJNMjA1LjUzNyAzOC43OTc1VjM3LjYzODhDMjA1LjgyNyAzMy43MTAyIDIwNi4xMTYgMzAuMTk4IDIwNi4xMTYgMjYuODQ4N1Y4LjcyNjM1TDE5My4yODYgMzQuMzQzOUgxOTEuNTg1TDE3Ny45NTkgOC42NTM5MlYyNi44NDg3QzE3Ny45NTkgMjkuNjE4NyAxNzguNzU1IDM4Ljc5NzUgMTc4Ljc1NSAzOC43OTc1SDE3My40MzRDMTczLjQzNCAzOC43OTc1IDE3NC4zMzkgMjkuMzQ3MSAxNzQuMzM5IDI2Ljg0ODdWMTIuNDM3N0MxNzQuMzM5IDkuNjg1ODUgMTczLjU0MyAwLjU0MzIxNCAxNzMuNTQzIDAuNTQzMjE0SDE3OC4yNDhMMTkyLjYzNSAyNy43MzU4TDIwNi4xNzEgMC41NDMyMTRIMjEwLjY5NUMyMTAuNjk1IDAuNTQzMjE0IDIxMC4xNyA4LjYzNTgxIDIxMC4xNyAxMi40Mzc3VjI2Ljg0ODdDMjEwLjE3IDMwLjE5OCAyMTAuNDc4IDMzLjcxMDIgMjEwLjc0OSAzNy41ODQ1VjM4Ljc5NzVIMjA1LjUwMUgyMDUuNTM3WiIvPjxwYXRoIGQ9Ik0yMjMuNjg4IDM4Ljc5NzdDMjIzLjY4OCAzOC43OTc3IDIyNC41MDIgMzAuNDMzNSAyMjQuNTAyIDI2Ljg0ODlWMTIuNDM3OUMyMjQuNTAyIDguODUzMjIgMjIzLjg1MSAwLjQ4OTA3IDIyMy44NTEgMC40ODkwN0gyNDkuNTNMMjQ5LjQ1NyA1LjQ4NTg0QzI0OS40NTcgNS40ODU4NCAyMzguNjkgMy42OTM1MSAyMzQuMjAyIDMuNjkzNTFIMjI4LjY0NlYxNy4xNDVIMjM2LjVDMjM5Ljg2NiAxNy4xNDUgMjQ3LjkxOSAxNi41MTEzIDI0Ny45MTkgMTYuNTExM1YyMS4wMzc0QzI0Ny45MTkgMjEuMDM3NCAyMzkuNTk1IDIwLjM0OTUgMjM2LjUgMjAuMzQ5NUgyMjguNjQ2VjM1LjU3NTFIMjM0LjcyN0MyMzkuNDY4IDM1LjU3NTEgMjUwIDMzLjYxOTkgMjUwIDMzLjYxOTlWMzguNzc5NkgyMjMuNzA2TDIyMy42ODggMzguNzk3N1oiLz48L3N2Zz4=" style="position:relative;width:236px;height:auto;display:block;margin-top:-6px"></div>
+<div class="pad stack" style="gap:14px;margin-top:14px"><span class="a-label">Comporta · Alentejo</span>
+<h1 class="a-h1" style="font-size:36px">A haven of authenticity.</h1>
+<p style="font-size:14.5px;line-height:1.55;color:var(--app-ink-2)">Open your villa, book the spa, a dinner by the fire or a Chef in Villa, and reach the team, all from your phone.</p>
+<div style="display:flex;gap:20px;margin:4px 0 2px"><div><b style="font-family:var(--display);font-size:25px;font-weight:500">68</b><div style="font-size:11px;color:var(--app-muted)">hectares of pines</div></div><div><b style="font-family:var(--display);font-size:25px;font-weight:500">2</b><div style="font-size:11px;color:var(--app-muted)">wings: Terracotta &amp; Sand</div></div><div><b style="font-family:var(--display);font-size:25px;font-weight:500">13</b><div style="font-size:11px;color:var(--app-muted)">restaurants &amp; bars</div></div></div>
+<button class="btn amber" data-go="home" style="margin-top:8px">Add my reservation</button>
+<button class="btn outline" data-go="home">Sign in</button>
+<p style="font-size:11.5px;color:var(--app-muted);text-align:center;margin:2px 0 22px">Use the reservation number from your confirmation email</p></div></div></section>
+<section class="view" data-view="home"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><div style="margin-right:auto"><span class="a-label">Friday, Nov 6</span><h2 class="a-h2" style="margin-top:1px">Good afternoon, Inês</h2></div><button class="icon-btn" aria-label="Notifications"><svg width="18" height="18"><use href="#i-bell"/></svg></button></div>
+<div class="app-scroll stack" id="home-body" style="gap:20px;padding-bottom:16px"></div><nav class="tabbar" data-tabbar></nav></section>
+<section class="view" data-view="experiences"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><h2 class="a-h2">Experiences</h2><button class="icon-btn" aria-label="Notifications"><svg width="18" height="18"><use href="#i-bell"/></svg></button></div>
+<div class="app-scroll stack" style="gap:16px;padding-bottom:16px"><div class="pad stack" id="experiences-body" style="gap:16px"></div></div><nav class="tabbar" data-tabbar></nav></section>
+<section class="view" data-view="dining"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><h2 class="a-h2">Dining</h2><button class="icon-btn" aria-label="Notifications"><svg width="18" height="18"><use href="#i-bell"/></svg></button></div>
+<div class="app-scroll stack" style="gap:16px;padding-bottom:16px"><div class="pad stack" id="dining-body" style="gap:16px"></div></div><nav class="tabbar" data-tabbar></nav></section>
+<section class="view" data-view="spa"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><h2 class="a-h2">Spa & wellness</h2><button class="icon-btn" aria-label="Notifications"><svg width="18" height="18"><use href="#i-bell"/></svg></button></div>
+<div class="app-scroll stack" style="gap:16px;padding-bottom:16px"><div class="pad stack" id="spa-body" style="gap:16px"></div></div><nav class="tabbar" data-tabbar></nav></section>
+<section class="view" data-view="events"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><h2 class="a-h2">What's open</h2><button class="icon-btn" aria-label="Notifications"><svg width="18" height="18"><use href="#i-bell"/></svg></button></div>
+<div class="app-scroll stack" style="gap:16px;padding-bottom:16px"><div class="pad stack" id="events-body" style="gap:16px"></div></div><nav class="tabbar" data-tabbar></nav></section>
+<section class="view" data-view="services"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><h2 class="a-h2">Room & services</h2><button class="icon-btn" aria-label="Notifications"><svg width="18" height="18"><use href="#i-bell"/></svg></button></div>
+<div class="app-scroll stack" style="gap:16px;padding-bottom:16px"><div class="pad stack" id="services-body" style="gap:16px"></div></div><nav class="tabbar" data-tabbar></nav></section>
+<section class="view" data-view="offers"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><h2 class="a-h2">Offers</h2><button class="icon-btn" aria-label="Notifications"><svg width="18" height="18"><use href="#i-bell"/></svg></button></div>
+<div class="app-scroll stack" style="gap:16px;padding-bottom:16px"><div class="pad stack" id="offers-body" style="gap:16px"></div></div><nav class="tabbar" data-tabbar></nav></section>
+<section class="view" data-view="slots"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><button class="icon-btn" data-go="experiences" aria-label="Back"><svg width="18" height="18"><use href="#i-left"/></svg></button><h2 class="a-h2" id="slots-title">Book</h2></div>
+<div class="app-scroll stack" style="gap:18px;padding-bottom:16px"><div class="pad stack" id="slots-body" style="gap:18px"></div></div></section>
+<section class="view" data-view="checkout"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><button class="icon-btn" data-go="slots" aria-label="Back"><svg width="18" height="18"><use href="#i-left"/></svg></button><h2 class="a-h2">Checkout</h2></div>
+<div class="app-scroll stack" style="gap:18px;padding-bottom:16px"><div class="pad stack" id="checkout-body" style="gap:16px"></div></div></section>
+<section class="view" data-view="confirmed"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="app-scroll stack" style="gap:18px;padding:14px 0 18px"><div class="pad stack" id="confirmed-body" style="gap:18px;text-align:center"></div></div><nav class="tabbar" data-tabbar></nav></section>
+<section class="view" data-view="pass"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><button class="icon-btn" data-go="confirmed" aria-label="Back"><svg width="18" height="18"><use href="#i-left"/></svg></button><h2 class="a-h2">Reservation pass</h2></div>
+<div class="app-scroll stack" style="gap:18px;padding-bottom:16px"><div class="pad stack" id="pass-body" style="gap:16px;text-align:center"></div></div><nav class="tabbar" data-tabbar></nav></section>
+<section class="view" data-view="chat"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><div style="margin-right:auto"><h2 class="a-h2">The team</h2><span class="a-meta" style="display:flex;align-items:center;gap:5px"><i style="width:7px;height:7px;border-radius:50%;background:#7E9D92;display:inline-block"></i>Online · Sublime Comporta</span></div><button class="icon-btn" aria-label="Call"><svg width="18" height="18"><use href="#i-phone"/></svg></button></div>
+<div class="app-scroll stack" id="msgs" style="gap:10px;padding:6px 20px 12px"></div>
+<div class="chips" id="sugg" style="padding-bottom:6px"></div>
+<form id="chat-form" style="flex:none;display:flex;gap:9px;padding:6px 16px 12px"><input id="chat-inp" autocomplete="off" placeholder="Ask anything…" style="flex:1;min-width:0;border:1px solid var(--app-line);background:var(--app-surface);border-radius:14px;padding:11px 14px;font:inherit;font-size:13.5px;color:var(--app-ink);outline:none"><button class="icon-btn" style="background:var(--app-pine);color:#fff;border:0;width:44px;height:44px;border-radius:14px" aria-label="Send"><svg width="18" height="18"><use href="#i-send"/></svg></button></form>
+<nav class="tabbar" data-tabbar></nav></section>
+<section class="view" data-view="stay"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><h2 class="a-h2">My stay</h2></div>
+<div class="app-scroll stack" style="gap:18px;padding-bottom:16px"><div class="pad stack" id="stay-body" style="gap:18px"></div></div><nav class="tabbar" data-tabbar></nav></section>
+</div></div></div><div class="stage-hint"><span class="dot"></span>Everything is clickable: reserve dinner, a picnic, the Onsen or the spa, message the The team. Arrow keys switch screens.</div></main>
+<aside class="notes"><span class="eyebrow" id="n-group"></span><h2 id="n-title"></h2><p id="n-lede" style="font-size:13.5px;color:var(--muted);line-height:1.5"></p><ul class="n-list" id="n-list"></ul>
+<div class="n-why"><span class="eyebrow">Why it matters for Sublime Comporta</span><p id="n-why"></p></div>
+<div class="n-nav"><button id="prev"><svg width="15" height="15"><use href="#i-left"/></svg>Previous</button><button id="next">Next<svg width="15" height="15"><use href="#i-right"/></svg></button></div>
+<p class="n-foot">Concept prototype, not a live product. Availability, times and guest details are illustrative. Prices (spa, Chef in Villa, Barman in Villa, wine tastings, romantic dinner, the Yoga, Tea & Fado Retreat), restaurant hours and seasons, rooms and policies are taken from the public Sublime Comporta website and its PDFs; time slots for the spa, padel and yoga, padel pricing and the retreat's daily schedule are placeholders (the site does not publish them). In production this connects to the resort's PMS (HOST) for reservations, room charges and guest data, plus the dining and spa booking systems: the integration is the first thing to scope.</p></aside></div>
+<script>(function(){
+"use strict";
+var $=function(s){return document.querySelector(s)};
+function esc(s){return String(s).replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c]})}
+function svg(i,w){return '<svg width="'+(w||18)+'" height="'+(w||18)+'"><use href="#i-'+i+'"/></svg>'}
+
+var ORDER=["welcome","home","experiences","dining","spa","events","slots","checkout","confirmed","pass","chat","services","offers","stay"];
+var NOTES={
+welcome:{group:"Arrival",title:"Welcome",lede:"The first ten seconds, in Sublime Comporta's own wordmark, colours and tone.",list:["'A haven of authenticity' is the resort's own line.","Real facts up front: 68 hectares of pines and dunes, two wings (Terracotta and Sand), 13 restaurants and bars."],why:"For a curated-hospitality brand the app has to feel as calm and considered as the resort itself."},
+home:{group:"Arrival",title:"Today",lede:"One calm screen for arrival day.",list:["Digital key and villa details first.","This stay happens to be the real Yoga, Tea & Fado Retreat (6–8 November), so the app shows what the package includes.","Today's plan mixes confirmed bookings with the next included moment."],why:"Guests who know what is on today use more of the resort, and call reception less."},
+experiences:{group:"Discover",title:"Experiences",lede:"Today almost every experience on the website is a 'Request Info' button. Here they are bookable.",list:["Chef in Villa (minimum 4 guests, two menus at € 145 and € 195 plus a € 250 service fee), Barman in Villa, wine tastings with the Head Sommelier, the romantic dinner in the yoga cabana, padel.","Each keeps its real rule: minimum guests, advance notice, price per person, 48-hour cancellation.","Outdoor experiences (horse riding, birdwatching, boat tours, dolphins, surf) stay as requests, since they depend on weather and partners."],why:"These are high-value, high-friction experiences. Booking them with the rules visible lifts take-up and removes back-and-forth."},
+dining:{group:"Discover",title:"Dining",lede:"Thirteen places to eat and drink, shown as they are open this week.",list:["Hours and seasons are real: Food Circle is Friday and Saturday at 7:30 PM, Beefbar and Sem Porta are daily, Sado changes by weekday.","The app only offers what is actually open on the guest's dates. Davvero and Canalha are closed until spring, the Beach Club and Ruína open in July 2027."],why:"Seasonal opening hours are the thing guests most often get wrong, and the thing reception most often has to explain."},
+spa:{group:"Discover",title:"Spa & wellness",lede:"The Spa in the Terracotta wing, the gym and the yoga programme.",list:["The spa menu has its real treatments and prices (50 / 80 minute options, prices per person, duo massages in one room).","Open every day 9:00 AM to 9:00 PM, adults only; gym 6:00 AM to 10:00 PM."],why:"Spa slots are perishable inventory. Easy booking fills the quiet hours."},
+events:{group:"Discover",title:"What's open",lede:"What is open on the guest's dates, and what is not.",list:["Live opening hours per venue, plus the venues closed for the season and the ones opening in July 2027.","A real operational problem solved in one screen."],why:"Fewer disappointed guests and fewer 'is X open tonight?' calls."},
+slots:{group:"Book without calling",title:"Pick a time",lede:"Fully working: day, time, guests and options, with each experience's own rules.",list:["Chef in Villa needs 4+ guests and adds the € 250 service fee.","Food Circle only opens Friday and Saturday; Sado's hours change by day.","Prices are per person, in euros, VAT included."],why:"The rules that live in PDFs and phone calls become the app's logic."},
+checkout:{group:"Book without calling",title:"Checkout",lede:"Charge to the villa or pay by wallet.",list:["Room charge by default; this is where the PMS integration (HOST) matters most.","Cancellation terms shown before paying."],why:"Frictionless payment turns browsing into booking, and posting charges straight to the PMS removes manual entry."},
+confirmed:{group:"Book without calling",title:"Confirmed",lede:"The confirmation, built from the booking just made.",list:["Reservation number, time, party size.","One-tap reminder."],why:"Fewer no-shows."},
+pass:{group:"Book without calling",title:"Reservation pass",lede:"A QR code for the host to scan.",list:["No paper vouchers."],why:"A clean record of who is where."},
+chat:{group:"During your stay",title:"The team",lede:"The resort's team, in the guest's pocket. Try 'spa hours', 'Chef in Villa' or 'is Davvero open'.",list:["Answers use the resort's real information: check-in 3 PM (villas 4 PM) and check-out noon, adults-only spa, seasonal restaurants.","Anything it cannot answer goes to a person at reservations."],why:"Reception handles fewer repeat questions, and every request is recorded."},
+services:{group:"During your stay",title:"Villa & services",lede:"Everything promised in the villa, one tap away.",list:["Early check-in and late check-out, a welcome drink and the best-rate promise are the direct-booking benefits listed on the site.","In-villa spa treatments, Kids Club and babysitters are separate, charged services."],why:"Small services shape how a stay feels, and they are easy to miss when you have to ask."},
+offers:{group:"During your stay",title:"Offers",lede:"The resort's real curated offers.",list:["The Yoga, Tea & Fado Retreat (this stay), New Year's Eve, Christmas with the Family, Sublime Paws, Family Days, a Golfer's Escape and more.","A guest who sees the next stay during this one books it before leaving."],why:"Direct rebooking beats any channel's commission."},
+stay:{group:"During your stay",title:"My stay",lede:"Reservation, charges and contacts.",list:["Room charges update as bookings are charged to the villa.","Check-in from 4:00 PM, check-out until noon for the Cabana Villas."],why:"Fewer calls to reception and a smoother check-out."}
+};
+var TABS=[
+{id:"home",label:"Today",icon:"i-home",match:["home"]},
+{id:"experiences",label:"Discover",icon:"i-compass",match:["experiences","dining","spa","events","slots","checkout","confirmed","pass"]},
+{id:"chat",label:"Team",icon:"i-chat",match:["chat"]},
+{id:"services",label:"Services",icon:"i-star",match:["services","offers"]},
+{id:"stay",label:"My stay",icon:"i-user",match:["stay"]}];
+document.querySelectorAll("[data-tabbar]").forEach(function(bar){
+bar.innerHTML=TABS.map(function(t){return '<button class="tab" data-go="'+t.id+'" data-tab="'+t.id+'"><svg><use href="#'+t.icon+'"/></svg>'+t.label+'</button>';}).join("")});
+
+var DAYS=[["Fri","Nov",6],["Sat","Nov",7],["Sun","Nov",8]];
+function sadoHours(d){return d===2?["12:30 PM","2:00 PM","3:30 PM"]:["12:30 PM","2:00 PM","7:30 PM","8:30 PM"]}
+var DIN=["7:00 PM","8:00 PM","9:00 PM"];
+var ACTS={
+table:{name:"Restaurant table",defHour:"7:30 PM",short:"table",price:0,zero:"No payment now",unit:"guest",durs:[120],mult:{120:1},cap:8,hours:["7:30 PM"],
+ vars:[
+ ["Food Circle",0,["7:30 PM"],"An intimate fire-led dinner around the ofyr, in the organic garden. One seating at 7:30 PM, Friday and Saturday from 1 November. Other dates on request, subject to a minimum charge equivalent to six guests.",null,[0,1]],
+ ["Sem Porta · dinner",0,DIN,"Tradition and innovation: iconic international dishes with a contemporary flair. Dinner 7:00 – 10:30 PM, daily from October to December.",null,null],
+ ["Sem Porta · breakfast",0,["7:30 AM","9:00 AM","10:30 AM"],"Breakfast daily 7:30 – 11:00 AM, September to December.",null,null],
+ ["Beefbar",0,["6:30 PM","8:00 PM","9:30 PM"],"The French Riviera meets Comporta: premium meats and sharing plates. Dinner 6:30 – 10:30 PM in November; the lounge is open from 12:30 PM, with a shorter menu at lunch.",null,null],
+ ["Sado",0,sadoHours,"Alentejo rice dishes with the Ria on the horizon, at the gateway to Comporta. Friday and Saturday 12:30 – 10:00 PM, Sunday lunch until 5:00 PM, closed Monday and Tuesday.",null,null],
+ ["Jacaré da Comporta (village)",0,["6:30 PM","8:00 PM","9:30 PM"],"Brazilian and Italian flavours in the village, with sunset cocktails. Dinner 6:00 – 10:00 PM, closed Wednesday and Thursday.",null,null]
+ ],addons:[["Table for the whole villa",0],["Celebration note to the team",0]],cls:"t-sem",maxQty:8,note:"No payment now."},
+chef:{name:"Chef in Villa",defHour:"7:30 PM",short:"Chef in Villa",price:0,unit:"guest",qty:"Guests",minQty:4,maxQty:8,days:[1,2],durs:[180],mult:{180:1},cap:2,hours:["7:30 PM","8:30 PM"],fee:250,feeLabel:"Private chef & service fee",
+ vars:[["Alentejo Essence",0,null,"A private chef cooks for you and your guests in the open air of your villa. Alentejo Essence: grilled catch of the day, Black Angus sirloin, Iberian pork. € 145 per guest, drinks not included. Minimum 4 guests, adults only. Time slots are illustrative.",145],["Sublime Flavors",0,null,"The fuller menu: grilled oysters, lobster tail with truffle butter, lamb chops. € 195 per guest, drinks not included. Minimum 4 guests, adults only. Time slots are illustrative.",195]],
+ addons:[["Sommelier wine pairing (priced on request)",0]],cls:"t-fire",note:"A € 250 service fee is added for the private chef and dining staff. Cancellations only up to 48 hours before."},
+barman:{name:"Barman in Villa",defHour:"6:00 PM",short:"Barman in Villa",price:0,unit:"guest",qty:"Guests",minQty:4,maxQty:8,days:[1,2],durs:[90],mult:{90:1},cap:2,hours:["5:00 PM","6:00 PM"],
+ vars:[["Comporta Sunset",0,null,"A tasting trip through the Alentejo sunset: four cocktails with carefully chosen bites, about 1h30. € 115 per guest. Minimum 4 guests, 24 hours' notice. Time slots are illustrative.",115],["Agave Journey",0,null,"A sensory tasting of tequila and mezcal, about 1h30. € 145 per guest. Minimum 4 guests, 24 hours' notice.",145],["Gin & Tonic Love",0,null,"Gins with premium tonic and botanicals from the organic garden. € 85 per guest. Minimum 4 guests, 24 hours' notice.",85]],
+ addons:[],cls:"t-bar",note:""},
+wine:{name:"Wine tasting",defHour:"5:30 PM",short:"wine tasting",price:0,unit:"guest",qty:"Guests",minQty:2,maxQty:12,days:[1,2],durs:[60],mult:{60:1},cap:6,hours:["4:00 PM","5:30 PM"],
+ vars:[["Formidable wines from north to south",0,null,"Six Portuguese wines from north to south, about 1 hour. € 90 per person. Hosted with our Head Sommelier, Filipe Holstein. 2 to 12 guests, 24 hours' notice. Time slots are illustrative.",90],["Fortified wines of Portugal",0,null,"Port, Moscatel, Madeira and Carcavelos, four wines, about 1 hour. € 65 per person. 2 to 12 guests.",65],["A journey through Setúbal",0,null,"White, red and fortified Moscatel from the Setúbal region, four wines, about 1 hour. € 55 per person. 2 to 12 guests.",55]],
+ addons:[],cls:"t-wine",note:""},
+spa:{name:"Spa treatment",defHour:"4:00 PM",short:"spa treatment",price:0,unit:"guest",qty:"Guests",minQty:1,maxQty:4,durs:[60],mult:{60:1},cap:3,hours:["10:00 AM","12:00 PM","2:00 PM","4:00 PM","6:00 PM","7:30 PM"],
+ vars:[
+ ["Deep Relax Balance · 50 min",0,null,null,165],["Deep Relax Balance · 80 min",0,null,null,225],["Sport Massage · 50 min",0,null,null,190],["Tailored Massage · 80 min",0,null,null,250],["Forest Signature Ritual · 80 min",0,null,null,260],["Body Scrub or Wrap · 50 min",0,null,null,160],["Essential Facial · 50 min",0,null,null,205],["Express Facial · 30 min",0,null,null,90]],
+ addons:[["In your villa (price on request)",0]],cls:"t-spa",note:"Spa Terracotta: open daily 9:00 AM – 9:00 PM, adults only, treatments booked in advance. Prices are per person; book two guests for a duo massage in one room. Time slots are illustrative."},
+romantic:{name:"Romantic dinner",defHour:"8:00 PM",short:"the romantic dinner",price:310,unit:"guest",qty:"Guests",minQty:2,maxQty:2,days:[1,2],durs:[150],mult:{150:1},cap:1,hours:["8:00 PM"],vars:null,addons:[],cls:"t-romance",note:"Five courses in the yoga cabana over the biological pool: € 310 per person, with wine pairing by our sommeliers, waters, coffee and tea, and a dedicated waiter. Free cancellation up to 48 hours before; within 48 hours 100% is charged. Time is illustrative."},
+padel:{name:"Padel court",defHour:"11:00 AM",short:"padel",price:0,zero:"Rate confirmed by reception",unit:"court",qty:"Players",minQty:2,maxQty:4,days:[1,2],durs:[60],mult:{60:1},cap:2,hours:["9:00 AM","11:00 AM","3:00 PM","5:00 PM"],vars:null,addons:[["Coach",0]],cls:"t-padel",note:"Padel and tennis courts in the pines, with rackets and balls provided. Advance booking required. Court rates and times are not published, so they are placeholders."},
+yoga:{name:"Retreat moment",defHour:"9:30 AM",short:"a retreat moment",price:0,zero:"Included in your retreat",unit:"guest",qty:"Guests",minQty:1,maxQty:8,days:[1],durs:[60],mult:{60:1},cap:10,hours:["9:30 AM"],
+ vars:[["Guided yoga with Manu Rodrigues",0,["9:30 AM"],"Part of the Yoga, Tea & Fado Retreat. Times are illustrative; the daily schedule is not published."],["Sound healing ritual",0,["11:30 AM"],"A restorative sound healing ritual, part of the retreat. Time is illustrative."],["Tea & infusions with Miguel Moreira",0,["4:30 PM"],"Tea and infusion moments by Infusões com História. Time is illustrative."]],
+ addons:[],cls:"t-yoga",note:""}
+};
+var B={act:"table",day:0,hour:"7:30 PM",guests:4,dur:120,vari:0,addons:{},pay:"room",paid:false};
+var extra=[],charged=0;
+function money(n,a){return n===0?((a&&a.zero)||"No charge"):"€"+n.toLocaleString("en-US",{minimumFractionDigits:n%1?2:0,maximumFractionDigits:2})}
+function qtyStr(a,n){return n+" "+(n===1?"guest":"guests")}
+function dayLabelFor(i){var d=DAYS[i];return d[0]+", "+d[1]+" "+d[2]}
+function dayLabel(){return dayLabelFor(B.day)}
+function varOf(a){return a.vars&&a.vars[B.vari]}
+function hoursFor(a){var v=varOf(a);if(v&&v[2])return typeof v[2]==="function"?v[2](B.day):v[2];return a.hours}
+function daysOk(a,i){var v=varOf(a);if(v&&v[5])return v[5].indexOf(i)>-1;return !a.days||a.days.indexOf(i)>-1}
+function firstDay(a){for(var i=0;i<DAYS.length;i++)if(daysOk(a,i))return i;return 0}
+function spots(a,day,h){var s=0,k=a+day+h;for(var i=0;i<k.length;i++)s=(s*31+k.charCodeAt(i))>>>0;var c=ACTS[a].cap;var taken=s%(c+2);return Math.max(1,c-Math.min(taken,c-1))}
+function perPerson(a){var v=varOf(a);if(v&&v[4])return v[4];return a.price+(v?v[1]:0)}
+function baseTotal(){var a=ACTS[B.act];return perPerson(a)*B.guests}
+function total(){var a=ACTS[B.act],ex=0;Object.keys(B.addons).forEach(function(i){if(B.addons[i])ex+=a.addons[i][1]*B.guests});return Math.round((baseTotal()+ex+(a.fee||0))*100)/100}
+function noteOf(a){var v=varOf(a);return (v&&v[3])||a.note}
+function setAct(k,v){var a=ACTS[k];B.act=k;B.dur=a.durs[0];B.vari=v||0;B.addons={};B.day=firstDay(a);var hs=hoursFor(a);B.hour=(a.defHour&&hs.indexOf(a.defHour)>-1)?a.defHour:hs[Math.min(1,hs.length-1)];B.guests=a.minQty||4;if(B.guests>(a.maxQty||8))B.guests=a.maxQty;if(k==="yoga"||k==="padel")B.guests=4;if(k==="table"||k==="spa"||k==="wine")B.guests=Math.max(a.minQty||1,Math.min(a.maxQty||8,k==="table"?4:2))}
+function pill(t,c){return '<span class="pill'+(c?" "+c:"")+'">'+t+'</span>'}
+function rowH(cls,title,meta,pl,attr){return '<button class="row" '+attr+'><span class="thumb '+cls+'" style="width:70px;height:62px"></span><span class="row-body"><span class="t">'+title+'</span><span class="a-meta">'+meta+'</span><span>'+pl+'</span></span><svg width="16" height="16" style="color:var(--app-muted)"><use href="#i-right"/></svg></button>'}
+function heroH(cls,title,sub,label,h){return '<div class="thumb '+cls+'" style="width:100%;height:'+(h||124)+'px;display:block"><span style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:14px;text-align:left;color:#fff;background:linear-gradient(180deg,rgba(0,0,0,0) 25%,rgba(0,0,0,.42))">'+(label?'<span class="a-label" style="color:rgba(255,255,255,.88)">'+label+'</span>':'')+'<span style="font-family:var(--display);font-size:28px;font-weight:500;letter-spacing:-.005em;line-height:1.05">'+title+'</span><span style="font-size:12px;color:rgba(255,255,255,.92);margin-top:2px">'+sub+'</span></span></div>'}
+
+function renderHome(){var h='';
+h+='<div class="card hero-pine" style="padding:15px;border:0;margin:0 20px;flex:none"><svg class="deco" viewBox="0 0 380 120" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="#CB9F6E" stroke-width="1" opacity=".4"><path d="M-10 96c70-46 120 16 190-22s120 10 210-30"/><path d="M-10 114c70-46 120 16 190-22s120 10 210-30"/></g></svg>'+
+'<div style="position:relative"><span class="a-label" style="color:rgba(255,255,255,.65)">Your stay</span><div style="font-family:var(--display);font-size:29px;font-weight:500;letter-spacing:-.005em;margin-top:3px;line-height:1.1">Sublime Comporta</div><div style="font-size:12px;color:rgba(255,255,255,.78);margin-top:3px">2-Bedroom Cabana Villa · Terracotta wing</div><div style="font-size:12px;color:rgba(255,255,255,.78)">Nov 6 – 8 · 4 adults · Yoga, Tea &amp; Fado Retreat</div>'+
+'<div style="display:flex;gap:8px;margin-top:13px"><button class="btn amber sm" style="flex:1" data-toast="Digital key sent to your phone">Unlock door</button><button class="btn sm" style="flex:1;background:rgba(255,255,255,.16)" data-go="stay">Stay details</button></div></div></div>';
+h+='<div class="card" style="padding:12px 14px;margin:0 20px;flex:none"><div style="display:grid;grid-template-columns:repeat(3,1fr);text-align:center;gap:6px">'+[["4 PM","Villa check-in"],["9 AM–9 PM","Spa"],["6 AM–10 PM","Gym"]].map(function(c){return '<div><b style="display:block;font-family:var(--display);font-size:21px;font-weight:500;color:var(--app-ink)">'+c[0]+'</b><span class="a-label">'+c[1]+'</span></div>'}).join("")+'</div></div>';
+h+='<div style="margin:0 20px;flex:none"><div class="sec-head" style="margin:0 0 11px"><h3 class="a-h3">Your plan today</h3><button class="link" data-go="stay">Stay details</button></div><div class="timeline">'+
+'<div class="tl now"><span class="t">4:00 PM</span><div class="a-h3">Check-in · villa ready, digital key active</div><span class="a-meta">Welcome drink on arrival day · private pool</span></div>'+
+'<div class="tl"><span class="t">7:30 PM</span><div class="a-h3">Dinner at Food Circle</div><span class="a-meta">Table for 4 · one seating · Confirmed</span></div>'+
+'<div class="tl sug"><span class="t">Saturday</span><div class="a-h3">Yoga with Manu Rodrigues</div><button class="pill sand" data-book="yoga" style="margin-top:4px">Reserve · included in your retreat</button></div></div></div>';
+h+='<div style="margin:0 20px;flex:none"><div class="sec-head" style="margin:0 0 11px"><h3 class="a-h3">Quick actions</h3></div><div class="qgrid">'+
+'<button class="qa" data-go="dining"><i>'+svg("fork")+'</i>Book a table</button><button class="qa" data-go="spa"><i>'+svg("drop")+'</i>Spa &amp; wellness</button><button class="qa" data-go="experiences"><i>'+svg("compass")+'</i>Experiences</button><button class="qa" data-go="chat"><i>'+svg("chat")+'</i>Message the team</button></div></div>';
+$("#home-body").innerHTML=h}
+
+function renderExperiences(){var h=heroH("t-house","Experiences","In & out of Sublime Comporta","Comporta");
+h+='<div class="stack rowlist" style="gap:9px">'+
+rowH("t-fire","Chef in Villa","A private chef in your villa · min. 4 guests",pill("From €145 per guest","clay"),'data-book="chef"')+
+rowH("t-bar","Barman in Villa","Cocktail tastings in your villa · min. 4 guests",pill("From €85 per guest"),'data-book="barman"')+
+rowH("t-wine","Wine tasting","With the Head Sommelier · 2 to 12 guests",pill("From €55 per person"),'data-book="wine"')+
+rowH("t-romance","Romantic dinner","Yoga cabana over the bio-pool · 5 courses with wine",pill("€310 per person","clay"),'data-book="romantic"')+
+rowH("t-padel","Padel &amp; tennis","Courts among the pines · racquets provided",pill("Book","sand"),'data-book="padel"')+
+rowH("t-yoga","Yoga, sound healing &amp; tea","Your retreat · with Manu Rodrigues and Miguel Moreira",pill("Included","sand"),'data-book="yoga"')+'</div>';
+h+='<div class="card" style="padding:4px 14px"><span class="a-label" style="display:block;padding-top:10px">Out and about · by request</span>'+
+[["Horse riding","Rice fields, golden dunes and the beaches · morning or afternoon"],["Bike tour through the rice fields","2 to 3 hours · 10 km · electric bikes available"],["Birdwatching","Santo André reserve · up to 250 species · 1 to 4 people"],["Boat tour from Tróia","Bay of Tróia and Arrábida · private tours possible"],["Dolphin watching","2 to 3 hours, catamaran or sailboat"],["Surf lessons","Alone or in a group"],["Dunas Golf","18 holes among the coastal dunes"],["Picnic","Advance booking of at least 12 hours"]].map(function(r){return '<button class="list-item" data-toast="Request sent: '+r[0]+'"><span style="flex:1">'+r[0]+'<span class="a-meta" style="display:block;font-weight:500">'+r[1]+'</span></span>'+pill("Request","sand")+'</button>'}).join("")+'</div>';
+h+='<div class="card" style="padding:4px 14px"><span class="a-label" style="display:block;padding-top:10px">With children</span><div class="list-item">'+svg("check")+'Kids Club, creative workshops and movie nights (additional charge)</div><div class="list-item">'+svg("check")+'Babysitters and a lifeguard pool</div><button class="list-item" data-go="chat">'+svg("chat")+'Ask the team about this weekend<span class="v">›</span></button></div>';
+$("#experiences-body").innerHTML=h}
+
+function renderDining(){var h=heroH("t-sem","Dine & Drink","Open this week, in the app","Comporta");
+h+='<div class="stack rowlist" style="gap:9px">'+
+rowH("t-fire","Food Circle","Fire-led dinner around the ofyr · Fri &amp; Sat, 7:30 PM",pill("Table","sand"),'data-res="0"')+
+rowH("t-sem","Sem Porta","Worldwide classics · dinner daily, breakfast daily",pill("Table","sand"),'data-res="1"')+
+rowH("t-beef","Beefbar","Premium meats, bold flavours · dinner daily from 6:30 PM",pill("Table","sand"),'data-res="3"')+
+rowH("t-sado","Sado","Alentejo rice dishes · Fri &amp; Sat all day, Sun lunch",pill("Table","sand"),'data-res="4"')+
+rowH("t-da","Jacaré da Comporta","In the village · dinner 6 – 10 PM, closed Wed &amp; Thu",pill("Table","sand"),'data-res="5"')+'</div>';
+h+='<div class="card" style="padding:4px 14px"><span class="a-label" style="display:block;padding-top:10px">Closed for the season</span><div class="hrow"><b>Davvero Comporta</b><span class="h">Reopens 1 May 2027</span></div><div class="hrow"><b>Canalha</b><span class="h">Reopens 1 May 2027</span></div><div class="hrow"><b>Praia Beach Club · sunbeds</b><span class="h">May to September</span></div><div class="hrow"><b>Ruína &amp; Beach Club</b><span class="h">Opening July 2027</span></div></div>';
+h+='<div class="card" style="padding:4px 14px"><span class="a-label" style="display:block;padding-top:10px">No booking needed</span><div class="hrow"><b>Sem Porta Bar</b><span class="h">Daily · garden cocktails</span></div><div class="hrow"><b>Beefbar lounge</b><span class="h">12:30 PM – midnight</span></div><div class="hrow"><b>Terracotta Pool bar</b><span class="h">By the pool</span></div></div>';
+h+='<div class="quote">Every table is bookable in the app for the nights the restaurant is actually open.<span class="who">Sublime Comporta</span></div>';
+$("#dining-body").innerHTML=h}
+
+function renderSpa(){var h=heroH("t-spa","Spa Terracotta","An adults-only sanctuary · open daily 9 AM – 9 PM","Energize");
+h+='<p style="font-size:13.5px;line-height:1.55;color:var(--app-ink-2)">Treatments prepared with ingredients from the organic garden. Guests of the Spa Rooms also enjoy the hammam, steam room and heated indoor pool. Massages can be enjoyed in duo in one room.</p><button class="btn amber" data-book="spa">Book a treatment</button>';
+h+='<div class="card" style="padding:4px 14px"><span class="a-label" style="display:block;padding-top:10px">Treatments · per person</span><div class="hrow"><b>Deep Relax Balance</b><span class="h">50 / 80 min · €165 / €225</span></div><div class="hrow"><b>Sport Massage</b><span class="h">50 / 80 min · €190 / €240</span></div><div class="hrow"><b>Tailored Massage</b><span class="h">50 / 80 min · €200 / €250</span></div><div class="hrow"><b>Forest Signature Ritual</b><span class="h">80 min · €260</span></div><div class="hrow"><b>Essential Facial</b><span class="h">50 min · €205</span></div></div>';
+h+='<div class="card" style="padding:4px 14px"><span class="a-label" style="display:block;padding-top:10px">Also here</span><div class="hrow"><b>Gym</b><span class="h">6:00 AM – 10:00 PM</span></div><div class="hrow"><b>Yoga &amp; classes</b><span class="h">Instructors 8 AM – 8 PM</span></div><div class="hrow"><b>Aqua · Sand wing</b><span class="h">Heated indoor pool, families</span></div><div class="hrow"><b>In-villa treatments</b><span class="h">On request</span></div></div>';
+$("#spa-body").innerHTML=h}
+
+function renderEvents(){var h=heroH("t-event","What's open","Your dates · Fri 6 – Sun 8 November","Comporta");
+var ev=[["Sem Porta","Dinner 7:00 – 10:30 PM · daily","Open"],["Beefbar","Dinner 6:30 – 10:30 PM · lounge from 12:30","Open"],["Food Circle","Fri &amp; Sat · one seating, 7:30 PM","Fri – Sat"],["Sado","Fri &amp; Sat 12:30 – 10 PM · Sun until 5 PM","Open"],["Jacaré da Comporta","Village · 6:00 – 10:00 PM · closed Wed &amp; Thu","Open"],["Spa Terracotta","Daily 9:00 AM – 9:00 PM · adults only","Open"],["Gym","Daily 6:00 AM – 10:00 PM","Open"]];
+h+='<div class="card" style="padding:4px 14px"><span class="a-label" style="display:block;padding-top:10px">Open on your dates</span>'+ev.map(function(e){return '<div class="hrow" style="align-items:center"><div style="flex:1"><b>'+e[0]+'</b><span class="a-meta" style="display:block;font-weight:500">'+e[1]+'</span></div>'+pill(e[2],"sand")+'</div>'}).join("")+'</div>';
+h+='<div class="card" style="padding:4px 14px"><span class="a-label" style="display:block;padding-top:10px">Closed on your dates</span>'+[["Davvero Comporta","Closed until 1 May 2027 · special opening Christmas Eve"],["Canalha","Closed 26 Oct 2026 – 30 Apr 2027"],["Praia Beach Club sunbeds","Open May to September"],["Ruína &amp; Sublime Comporta Beach Club","Opening July 2027"]].map(function(e){return '<div class="hrow" style="align-items:center"><div style="flex:1"><b>'+e[0]+'</b><span class="a-meta" style="display:block;font-weight:500">'+e[1]+'</span></div>'+pill("Closed")+'</div>'}).join("")+'</div>';
+h+='<div class="quote">Hours change by month, and by weekday. The app shows only what is open on the guest\'s dates.<span class="who">Sublime Comporta</span></div>';
+$("#events-body").innerHTML=h}
+
+function renderSlots(){var a=ACTS[B.act];$("#slots-title").textContent="Book "+a.short;
+var hs=hoursFor(a);if(hs.indexOf(B.hour)<0)B.hour=hs[Math.min(1,hs.length-1)];
+var h='<div class="week" style="width:100%">'+DAYS.map(function(d,i){var off=!daysOk(a,i);return '<button class="day" data-bk-day="'+i+'" aria-pressed="'+(i===B.day)+'" '+(off?'disabled style="opacity:.35"':'')+'>'+d[0]+'<b>'+d[2]+'</b></button>'}).join("")+'</div>';
+var note=noteOf(a);
+if(note)h+='<div class="quote">'+note+'<span class="who">Sublime Comporta</span></div>';
+if(a.vars)h+='<div><span class="a-label">'+(B.act==="table"?"Where":B.act==="spa"?"Treatment":B.act==="yoga"?"Moment":B.act==="chef"?"Menu":"Experience")+'</span><div class="chips" style="padding:9px 0 0;flex-wrap:wrap">'+a.vars.map(function(v,i){return '<button class="chip" data-bk-var="'+i+'" aria-pressed="'+(i===B.vari)+'">'+v[0]+'</button>'}).join("")+'</div></div>';
+h+='<div><span class="a-label">Pick a time</span><div class="slotgrid" style="margin-top:9px">'+hs.map(function(t){var s=spots(B.act,B.day,t);return '<button class="slotbtn" data-bk-hour="'+t+'" aria-pressed="'+(t===B.hour)+'">'+t+'<small>'+s+" "+(s===1?"spot":"spots")+'</small></button>'}).join("")+'</div></div>';
+var pp=perPerson(a),min=a.minQty||1,priceLine=pp?"€"+pp+" per "+(a.unit==="court"?"player":a.unit)+(a.fee?" + €"+a.fee+" service fee":""):(a.zero||"No charge");
+h+='<div class="card" style="display:flex;align-items:center;gap:12px"><div style="flex:1"><div class="a-h3">'+(a.qty||"Guests")+'</div><span class="a-meta">'+priceLine+(min>1?" · min. "+min:"")+'</span></div><div class="stepper"><button data-step="-1" aria-label="Fewer">−</button><b>'+B.guests+'</b><button data-step="1" aria-label="More">+</button></div></div>';
+if(a.addons.length)h+='<div class="card" style="padding:4px 14px"><span class="a-label" style="display:block;padding-top:10px">Add extras</span>'+a.addons.map(function(x,i){return '<div class="list-item"><span>'+x[0]+'<span class="a-meta" style="display:block">'+(x[1]?money(x[1])+" per guest":"Included")+'</span></span><button class="switch" data-bk-addon="'+i+'" aria-pressed="'+(!!B.addons[i])+'" aria-label="'+x[0]+'"></button></div>'}).join("")+'</div>';
+var tot=total();
+h+='<div class="card stack" style="gap:8px"><div style="display:flex"><span class="a-meta">'+esc(whatName(a))+" × "+B.guests+'</span><b style="margin-left:auto;font-size:13.5px">'+(baseTotal()?money(baseTotal(),a):(a.zero||"No charge"))+'</b></div>'+
+(a.fee?'<div style="display:flex"><span class="a-meta">'+a.feeLabel+'</span><b style="margin-left:auto;font-size:13.5px">'+money(a.fee)+'</b></div>':'')+
+Object.keys(B.addons).filter(function(i){return B.addons[i]&&a.addons[i][1]}).map(function(i){return '<div style="display:flex"><span class="a-meta">'+a.addons[i][0]+' × '+B.guests+'</span><b style="margin-left:auto;font-size:13.5px">'+money(a.addons[i][1]*B.guests)+'</b></div>'}).join("")+
+'<div style="display:flex;border-top:1px solid var(--app-line);padding-top:9px"><b>Total</b><b style="margin-left:auto;font-family:var(--display);font-size:25px;font-weight:500">'+(tot?money(tot):(a.zero||"No charge"))+'</b></div>'+(tot?'<span class="a-meta">VAT included</span>':'')+'</div>';
+h+='<button class="btn amber" data-go="checkout">Continue · '+dayLabel()+', '+B.hour+'</button>';
+$("#slots-body").innerHTML=h}
+
+function whatName(a){var v=varOf(a);return v?((B.act==="table"||B.act==="spa"||B.act==="yoga")?v[0]:a.name+" · "+v[0]):a.name}
+function nameFor(x){var a=ACTS[x.act],v=a.vars&&a.vars[x.v];return v?((x.act==="table"||x.act==="spa"||x.act==="yoga")?v[0]:a.name+" · "+v[0]):a.name}
+function cancelNote(a){return B.act==="chef"||B.act==="romantic"?"Free cancellation up to 48 hours before; after that the full amount is charged.":B.act==="spa"?"Please cancel at least 24 hours ahead where possible.":"Free cancellation up to 24 h before."}
+function renderCheckout(){var a=ACTS[B.act],tot=total();
+var opts=[["room","Charge to Villa","Posted to your folio at check-out","i-key"],["wallet","Apple Pay","Face ID","i-card"],["card","Visa •••• 4242","Saved card","i-card"]];
+$("#checkout-body").innerHTML='<div class="card" style="display:flex;gap:12px;align-items:center"><span class="thumb '+a.cls+'" style="width:54px;height:54px"></span><div><div class="a-h3">'+esc(whatName(a))+'</div><span class="a-meta">'+dayLabel()+' · '+B.hour+' · '+qtyStr(a,B.guests)+'</span></div></div>'+
+(tot>0?'<span class="a-label">Pay with</span><div class="stack" style="gap:9px">'+opts.map(function(o){return '<button class="payopt" data-pay="'+o[0]+'" aria-pressed="'+(B.pay===o[0])+'"><span class="radio">'+svg("check",12)+'</span>'+svg(o[3].slice(2),20)+'<span style="flex:1">'+o[1]+'<span class="a-meta" style="display:block;font-weight:500">'+o[2]+'</span></span></button>'}).join("")+'</div>':'<div class="card" style="background:var(--app-mint);border-color:transparent"><b>'+(a.zero||"No charge")+'</b><span class="a-meta" style="display:block">Nothing to pay now.</span></div>')+
+'<div class="card" style="display:flex"><b>Total</b><b style="margin-left:auto;font-family:var(--display);font-size:25px;font-weight:500">'+(tot?money(tot):(a.zero||"No charge"))+'</b></div>'+(tot?'<p class="a-meta" style="text-align:center">VAT included.</p>':'')+
+'<p class="a-meta" style="text-align:center">'+cancelNote(a)+'</p><button class="btn amber" id="confirm-pay">'+(tot>0?"Confirm &amp; pay "+money(tot):"Confirm booking")+'</button>'}
+
+function confirmBooking(){var tot=total();if(B.pay==="room")charged+=tot;extra=[{d:B.day,h:B.hour,act:B.act,v:B.vari,g:B.guests}].concat(extra);B.paid=true;go("confirmed")}
+function renderConfirmed(){var a=ACTS[B.act];
+$("#confirmed-body").innerHTML='<div class="burst" style="margin-top:6px">'+svg("check",34)+'</div><div><h1 class="a-h1">You\'re booked.</h1><p class="a-meta" style="margin-top:5px">Reservation SC-70215 · also sent to your email</p></div>'+
+'<div class="card stack" style="gap:10px;text-align:left"><span class="a-label">'+esc(whatName(a))+'</span><div style="display:flex;gap:12px;align-items:center"><span class="thumb '+a.cls+'" style="width:54px;height:54px"></span><div><div class="a-h3">'+dayLabel()+' · '+B.hour+'</div><span class="a-meta">'+qtyStr(a,B.guests)+'</span></div></div>'+
+'<div class="list-item" style="padding:9px 0">'+svg("pin")+'Sublime Comporta, Muda · Grândola<span class="v">Resort map</span></div><div class="list-item" style="padding:9px 0">'+svg("bell")+'Remind me 1 hour before<button class="switch" data-switch aria-pressed="true" aria-label="Reminder"></button></div></div>'+
+'<button class="btn" data-go="pass">'+svg("qr")+'Show reservation pass</button><button class="btn outline" data-go="stay">See my stay</button>'}
+function qr(){var n=25,s=7,cells="",seed=70215;function r(){seed=(seed*1103515245+12345)&0x7fffffff;return seed/0x7fffffff}
+function inF(x,y){return (x<8&&y<8)||(x>=n-8&&y<8)||(x<8&&y>=n-8)}
+function finder(ox,oy){var o="";for(var i=0;i<7;i++)for(var j=0;j<7;j++){var e=i===0||j===0||i===6||j===6,c=i>=2&&i<=4&&j>=2&&j<=4;if(e||c)o+='<rect x="'+((ox+i)*s)+'" y="'+((oy+j)*s)+'" width="'+s+'" height="'+s+'"/>'}return o}
+for(var x=0;x<n;x++)for(var y=0;y<n;y++){if(inF(x,y))continue;if(r()>.52)cells+='<rect x="'+(x*s)+'" y="'+(y*s)+'" width="'+s+'" height="'+s+'"/>'}
+return '<svg viewBox="0 0 '+(n*s)+' '+(n*s)+'" width="200" height="200" fill="#231C1A" shape-rendering="crispEdges" aria-label="Reservation pass QR code">'+cells+finder(0,0)+finder(n-7,0)+finder(0,n-7)+'</svg>'}
+function renderPass(){var a=ACTS[B.act];$("#pass-body").innerHTML='<div class="qrbox">'+qr()+'</div><div><div class="a-h2">'+esc(whatName(a))+'</div><span class="a-meta">'+dayLabel()+' · '+B.hour+' · '+qtyStr(a,B.guests)+'</span></div><p class="a-meta">Show this to your host. They scan it, no paper vouchers.</p><button class="btn outline">'+svg("share",16)+'Send to a guest in my party</button>'}
+
+function renderServices(){var req=[["Early check-in / late check-out","Direct-booking benefit, subject to availability"],["Welcome drink","On arrival day, for direct bookings"],["In-villa spa treatment","Prices on request"],["Babysitter","For families"],["Kids Club","Additional charge"],["Borrow a bike","Endless bike rides through the pines"],["Picnic","12 hours' notice"]];
+var h=heroH("t-house","Your villa","2-Bedroom Cabana Villa · 160 m² · private pool, fireplaces","Terracotta wing");
+h+='<div class="card" style="display:flex;gap:12px;align-items:center"><span class="icon-btn" style="background:var(--app-mint)">'+svg("phone")+'</span><div style="flex:1"><div class="a-h3">The team</div><span class="a-meta">Message here or call +351 269 449 397</span></div><button class="btn sm amber" style="width:auto" data-go="chat">Chat</button></div>';
+h+='<div class="card" style="padding:4px 14px"><span class="a-label" style="display:block;padding-top:10px">Request</span>'+req.map(function(r){return '<button class="list-item" data-toast="Request sent: '+r[0]+'"><span style="flex:1">'+r[0]+'<span class="a-meta" style="display:block;font-weight:500">'+r[1]+'</span></span>'+pill("Request","sand")+'</button>'}).join("")+'</div>';
+h+='<div class="card" style="padding:4px 14px"><span class="a-label" style="display:block;padding-top:10px">In your villa</span><div class="list-item">'+svg("check")+'Two king bedrooms, two bathtubs overlooking the garden</div><div class="list-item">'+svg("check")+'Private pool and three terraces</div><div class="list-item">'+svg("check")+'Indoor and outdoor fireplaces</div><div class="list-item">'+svg("check")+'Fully equipped kitchen and living room</div><div class="list-item">'+svg("check")+'Fully serviced by the hotel · pet friendly</div></div>';
+h+='<div class="stack rowlist" style="gap:9px">'+rowH("t-gift","Curated offers","Retreats, family days, a golfer's escape",pill("Offers"),'data-go="offers"')+'</div>';
+$("#services-body").innerHTML=h}
+
+function renderOffers(){
+var h='<div class="quote">An intimate journey of rituals, movement and the soul of Portuguese music.<span class="who">Yoga, Tea &amp; Fado Retreat · 6 – 8 November 2026</span></div>';
+h+='<div class="card" style="padding:4px 14px"><span class="a-label" style="display:block;padding-top:10px">Your retreat includes</span><div class="hrow"><b>Stay</b><span class="h">Two nights + breakfast</span></div><div class="hrow"><b>Yoga</b><span class="h">With Manu Rodrigues</span></div><div class="hrow"><b>Sound healing ritual</b><span class="h">Restorative</span></div><div class="hrow"><b>Tea &amp; infusions</b><span class="h">Miguel Moreira</span></div><div class="hrow"><b>Lunch</b><span class="h">At Beefbar</span></div><div class="hrow"><b>Dinner &amp; live fado</b><span class="h">Cuca Roseta at Davvero</span></div><div class="hrow"><b>Price</b><span class="h">€990 pp · €1,400 per couple</span></div></div>';
+h+='<div class="card" style="padding:4px 14px"><span class="a-label" style="display:block;padding-top:10px">Next stays</span>'+
+[["New Year's Eve at Sublime","An exceptional stay with an exclusive New Year's Eve"],["Christmas with the Family","Memories to cherish"],["Sublime Paws","An off-season escape for guests and their pets"],["Family Days in Comporta","A weekend to slow down and reconnect"],["A Golfer's Escape","Golf, epicurean pleasures and wellbeing"],["Comporta, Slowly","More days, more nature, more time"]].map(function(o){return '<div class="menu-item"><div style="flex:1"><div class="a-h3">'+o[0]+'</div><span class="a-meta">'+o[1]+'</span></div></div>'}).join("")+'</div>';
+h+='<div class="card" style="display:flex;gap:12px;align-items:center"><span class="thumb t-gift" style="width:58px;height:58px;display:grid;place-items:center;color:#fff">'+svg("gift",24)+'</span><div style="flex:1;min-width:0"><div class="a-h3">Gift vouchers</div><span class="a-meta">A stay at Sublime Comporta or Lisboa</span></div><button class="pill sand" data-toast="Gift vouchers opened">Shop</button></div>';
+h+='<div class="card" style="display:flex;gap:12px;align-items:center"><span class="thumb t-house" style="width:58px;height:58px;display:grid;place-items:center;color:#fff">'+svg("star",24)+'</span><div style="flex:1;min-width:0"><div class="a-h3">Continue in Lisbon</div><span class="a-meta">Sublime Lisboa, a townhouse in Amoreiras</span></div><button class="pill sand" data-toast="Sublime Lisboa opened">Open</button></div>';
+$("#offers-body").innerHTML=h}
+
+var msgs=[
+{r:"out",t:"Is Davvero open this weekend?",ts:"1:02 PM"},
+{r:"in",t:"Davvero Comporta is closed for the season and reopens on 1 May 2027. For Italian, your retreat dinner with Cuca Roseta is at Davvero on its special evening. Tonight Food Circle, Sem Porta and Beefbar are open.",ts:"1:03 PM",who:1,a:[["See what's open","go:events"],["Book a table","go:dining"]]}];
+var KB=[
+[/check.?out|check.?in|late|early/i,"Check-in is from 4:00 PM for the Cabana Villas (3:00 PM for rooms and suites) and check-out is until 12:00 noon. Early check-in and late check-out are available on direct bookings, subject to availability.",[["Request late check-out","toast:Request sent: Late check-out"]]],
+[/chef|villa|barman|cocktail/i,"Chef in Villa needs at least 4 guests: Alentejo Essence is € 145 per guest, Sublime Flavors € 195, plus a € 250 service fee, drinks not included. Barman in Villa starts at € 85 per guest. Cancel up to 48 hours before.",[["Book Chef in Villa","act:chef"],["Book Barman in Villa","act:barman"]]],
+[/spa|massage|facial|treatment|gym|yoga/i,"The Spa in the Terracotta wing is open daily 9:00 AM – 9:00 PM, adults only. The gym is open 6:00 AM – 10:00 PM, with instructors from 8:00 AM to 8:00 PM.",[["Book a treatment","act:spa"],["See spa","go:spa"]]],
+[/wine|sommelier|tasting/i,"Our Head Sommelier, Filipe Holstein, hosts tastings for 2 to 12 guests: € 55, € 65 or € 90 per person, about an hour, with 24 hours' notice.",[["Book a tasting","act:wine"]]],
+[/padel|tennis|court/i,"There are padel and tennis courts among the pines, with rackets and balls. Advance booking is required.",[["Book padel","act:padel"]]],
+[/davvero|canalha|beach|club|ruina|ruína|closed|open/i,"Davvero Comporta and Canalha are closed for the season and reopen in May 2027. The Praia sunbeds run May to September, and Ruína and the Beach Club open in July 2027. Sem Porta, Beefbar, Food Circle (Fri and Sat), Sado and Jacaré da Comporta are open.",[["See what's open","go:events"]]],
+[/dinner|eat|food|restaurant|lunch|breakfast|food circle|beefbar|sado|sem porta/i,"Tonight: Food Circle at 7:30 PM (one seating, Fri and Sat), Sem Porta from 7:00 PM, Beefbar from 6:30 PM. Sado is open for lunch and dinner on Friday and Saturday.",[["Book a table","go:dining"]]],
+[/kid|child|children|baby|family/i,"The Kids Club (creative workshops, movie nights, outdoor games) is available at an additional charge, and there are babysitters and a lifeguard pool. The spa is adults only.",null],
+[/dog|pet/i,"Cabana Suites and the Cabana Villas are pet friendly. There is also the Sublime Paws off-season offer for guests and their four-legged companions.",null],
+[/horse|bike|bird|boat|dolphin|surf|golf|picnic/i,"Horse riding, a bike tour through the rice fields, birdwatching in Santo André, boat and dolphin tours, surf and Dunas Golf can all be arranged. Tell me the day and I will send the request to the team.",[["See experiences","go:experiences"]]],
+[/retreat|fado|yoga|tea/i,"Your Yoga, Tea & Fado Retreat includes yoga with Manu Rodrigues, a sound healing ritual, tea and infusions with Miguel Moreira, lunch at Beefbar and dinner with a live fado concert by Cuca Roseta.",[["See your retreat","go:offers"]]],
+[/human|person|reception|call|phone/i,"Of course. I've flagged this for the team and they will message you in a few minutes. You can also call reservations on +351 269 449 397.",null]];
+var SUG=["Is Davvero open?","Chef in Villa","Spa hours","Where can I eat tonight?","Talk to a person"];
+function paintMsgs(typing){var m=$("#msgs");
+m.innerHTML=msgs.map(function(x){return '<div class="bubble '+x.r+'">'+esc(x.t)+(x.a?'<div class="acts">'+x.a.map(function(a){return '<button data-x="'+a[1]+'">'+a[0]+'</button>'}).join("")+'</div>':'')+'<small>'+(x.who?"The team · ":"")+x.ts+'</small></div>'}).join("")+(typing?'<div class="bubble in typing"><i></i><i></i><i></i></div>':'');
+m.scrollTop=m.scrollHeight}
+function ask(q){var ts=new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"});msgs.push({r:"out",t:q,ts:ts});paintMsgs(true);
+var hit=null;for(var i=0;i<KB.length;i++){if(KB[i][0].test(q)){hit=KB[i];break}}
+setTimeout(function(){msgs.push({r:"in",t:hit?hit[1]:"Good question. I'll check with the team and reply here shortly. Meanwhile I can book a table, the spa or an experience.",ts:ts,who:1,a:hit?hit[2]:null});paintMsgs()},750)}
+function renderChat(){paintMsgs();$("#sugg").innerHTML=SUG.map(function(x){return '<button class="chip" data-sug>'+x+'</button>'}).join("")}
+
+function renderStay(){var h='<div class="card hero-pine" style="border:0"><span class="a-label" style="color:rgba(255,255,255,.65)">Reservation SC-70215</span><div style="font-family:var(--display);font-size:29px;font-weight:500;margin-top:3px;line-height:1.1">Sublime Comporta</div><div style="font-size:12px;color:rgba(255,255,255,.78)">2-Bedroom Cabana Villa · Nov 6 – 8 · 4 adults</div></div>';
+h+='<div class="stats"><div class="stat"><span class="a-label">Room charges</span><b>'+money(charged)+'</b></div><div class="stat"><span class="a-label">Bookings</span><b>'+(extra.length+1)+'</b></div></div>';
+if(extra.length)h+='<div class="card timeline" style="padding:14px 14px 0 34px">'+extra.map(function(x){var a=ACTS[x.act];return '<div class="tl now"><span class="t">'+dayLabelFor(x.d)+" · "+x.h+'</span><div class="a-h3">'+esc(nameFor(x))+'</div><span class="a-meta">'+qtyStr(a,x.g)+" · Just booked</span></div>"}).join("")+'</div>';
+h+='<div class="card" style="padding:4px 14px"><div class="list-item">'+svg("key")+'Digital villa key<span class="v">Active</span></div><div class="list-item">'+svg("sun")+'Check-in / check-out<span class="v">4 PM / 12 noon</span></div><div class="list-item">'+svg("fork")+'Breakfast<span class="v">7:30 – 11:00 AM</span></div><div class="list-item">'+svg("drop")+'Spa Terracotta<span class="v">9 AM – 9 PM</span></div><div class="list-item">'+svg("bell")+'Activity reminders<button class="switch" data-switch aria-pressed="true" aria-label="Reminders"></button></div><button class="list-item" data-toast="Express check-out set up">'+svg("pin")+'Express check-out<span class="v">Set up</span></button></div>';
+h+='<div class="card" style="display:flex;gap:12px;align-items:center"><span class="icon-btn" style="background:var(--app-mint)">'+svg("phone")+'</span><div style="flex:1"><div class="a-h3">Prefer to talk?</div><span class="a-meta">Reservations · +351 269 449 397</span></div></div>';
+$("#stay-body").innerHTML=h}
+
+var views={},railItems={};
+document.querySelectorAll("[data-view]").forEach(function(v){views[v.dataset.view]=v});
+document.querySelectorAll(".rail-item").forEach(function(b){railItems[b.dataset.go]=b});
+var current=null;
+var R={home:renderHome,experiences:renderExperiences,dining:renderDining,spa:renderSpa,events:renderEvents,slots:renderSlots,checkout:renderCheckout,confirmed:renderConfirmed,pass:renderPass,chat:renderChat,services:renderServices,offers:renderOffers,stay:renderStay};
+function render(id){if(R[id])R[id]()}
+function go(id){
+if(!views[id])return;
+var changed=id!==current;current=id;render(id);
+if(!changed)return;
+Object.keys(views).forEach(function(k){views[k].classList.toggle("active",k===id)});
+Object.keys(railItems).forEach(function(k){railItems[k].setAttribute("aria-current",k===id?"true":"false")});
+var sc=views[id].querySelector(".app-scroll");if(sc&&id!=="chat")sc.scrollTop=0;
+var tab=(TABS.filter(function(t){return t.match.indexOf(id)>-1})[0]||{}).id;
+document.querySelectorAll("[data-tab]").forEach(function(t){t.setAttribute("aria-current",t.dataset.tab===tab?"true":"false")});
+var n=NOTES[id];
+$("#n-group").textContent=n.group;$("#n-title").textContent=n.title;$("#n-lede").textContent=n.lede;
+$("#n-list").innerHTML=n.list.map(function(x){return "<li>"+x+"</li>"}).join("");$("#n-why").textContent=n.why;
+var i=ORDER.indexOf(id);$("#prev").disabled=(i<=0);$("#next").disabled=(i>=ORDER.length-1);
+if(history.replaceState)history.replaceState(null,"","#"+id)}
+function step(d){var i=ORDER.indexOf(current)+d;if(i>=0&&i<ORDER.length)go(ORDER[i])}
+function toast(t){var e=$("#toast");if(!e){e=document.createElement("div");e.id="toast";e.style.cssText="position:absolute;left:50%;bottom:92px;transform:translateX(-50%);background:#2F2624;color:#fff;font-size:12.5px;font-weight:700;padding:10px 16px;border-radius:99px;z-index:20;transition:opacity .2s;max-width:80%;text-align:center";document.querySelector(".screen").appendChild(e)}
+e.innerHTML=t;e.style.opacity=1;clearTimeout(toast.t);toast.t=setTimeout(function(){e.style.opacity=0},2200)}
+function action(x){var p=x.split(":"),k=p[0],v=p.slice(1).join(":");if(k==="act"){setAct(v);go("slots")}else if(k==="go")go(v);else if(k==="toast")toast(v)}
+$("#prev").addEventListener("click",function(){step(-1)});$("#next").addEventListener("click",function(){step(1)});
+document.addEventListener("click",function(e){
+var t;
+if(t=e.target.closest("[data-x]")){action(t.dataset.x);return}
+if(t=e.target.closest("[data-res]")){setAct("table",+t.dataset.res);go("slots");return}
+if(t=e.target.closest("[data-book]")){setAct(t.dataset.book);go("slots");return}
+if(t=e.target.closest("[data-go]")){e.preventDefault();go(t.dataset.go);return}
+if(t=e.target.closest("[data-toast]")){toast(t.dataset.toast);return}
+if(t=e.target.closest("[data-bk-day]")){B.day=+t.dataset.bkDay;renderSlots();return}
+if(t=e.target.closest("[data-bk-hour]")){B.hour=t.dataset.bkHour;renderSlots();return}
+if(t=e.target.closest("[data-bk-var]")){B.vari=+t.dataset.bkVar;var a0=ACTS[B.act];if(!daysOk(a0,B.day))B.day=firstDay(a0);renderSlots();return}
+if(t=e.target.closest("[data-bk-addon]")){var i=t.dataset.bkAddon;B.addons[i]=!B.addons[i];renderSlots();return}
+if(t=e.target.closest("[data-step]")){var a=ACTS[B.act];B.guests=Math.max(a.minQty||1,Math.min(a.maxQty||8,B.guests+(+t.dataset.step)));renderSlots();return}
+if(t=e.target.closest("[data-pay]")){B.pay=t.dataset.pay;renderCheckout();return}
+if(t=e.target.closest("#confirm-pay")){confirmBooking();return}
+if(t=e.target.closest("[data-sug]")){ask(t.textContent);return}
+var grp=e.target.closest("[data-chip],[data-seg],[data-day]");
+if(grp){var kind=grp.hasAttribute("data-chip")?"data-chip":grp.hasAttribute("data-seg")?"data-seg":"data-day";
+grp.parentElement.querySelectorAll("["+kind+"]").forEach(function(s){s.setAttribute("aria-pressed",s===grp?"true":"false")});return}
+var sw=e.target.closest("[data-switch]");if(sw)sw.setAttribute("aria-pressed",sw.getAttribute("aria-pressed")==="true"?"false":"true")});
+$("#chat-form").addEventListener("submit",function(e){e.preventDefault();var v=$("#chat-inp").value.trim();if(v){$("#chat-inp").value="";ask(v)}});
+var nb=$("#notes-toggle");
+function setNotes(on){document.body.setAttribute("data-notes",on?"on":"off");nb.setAttribute("aria-pressed",on?"true":"false");try{localStorage.setItem("sc-notes",on?"on":"off")}catch(e){}}
+nb.addEventListener("click",function(){setNotes(document.body.getAttribute("data-notes")!=="on")});
+document.addEventListener("keydown",function(e){if(e.target.matches("input,textarea"))return;
+if(e.key==="ArrowRight")step(1);if(e.key==="ArrowLeft")step(-1);if(e.key==="n"||e.key==="N")nb.click()});
+var sn=null;try{sn=localStorage.getItem("sc-notes")}catch(e){}
+setNotes(sn==="on");
+var start=(location.hash||"").replace("#","");
+go(views[start]?start:"welcome");
+})();
+</script></body></html>
